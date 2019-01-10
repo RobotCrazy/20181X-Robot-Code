@@ -65,7 +65,7 @@ int targetFlywheelSpeed = 0;
 void detectFlywheelSpeedDrop()
 {
 	int currentSpeed = flywheel.get_actual_velocity();
-	if (flywheelOnTarget == true && currentSpeed - targetFlywheelSpeed > 10)
+	if (flywheelOnTarget == true && targetFlywheelSpeed - currentSpeed > 10)
 	{
 		targetFlywheelSpeed = 150;
 		doingFirstShot = false;
