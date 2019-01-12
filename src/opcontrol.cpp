@@ -65,9 +65,11 @@ int targetFlywheelSpeed = 0;
 void detectFlywheelSpeedDrop()
 {
 	int currentSpeed = flywheel.get_actual_velocity();
-	if (flywheelOnTarget == true && targetFlywheelSpeed - currentSpeed > 10)
+	if (flywheelOnTarget == true && targetFlywheelSpeed - currentSpeed > 30)
 	{
-		targetFlywheelSpeed = 150;
+		std::cout << "Entered if"
+							<< "\n";
+		targetFlywheelSpeed = 130;
 		doingFirstShot = false;
 		flywheelOnTarget = false;
 	}
@@ -76,7 +78,7 @@ void detectFlywheelSpeedDrop()
 char *parameter;
 void maintainFlywheelSpeed(void *param)
 {
-	float kp = 80;
+	float kp = 60;
 	float ki = 0;
 	float kd = 0;
 	int currentSpeed = flywheel.get_actual_velocity();
@@ -89,14 +91,12 @@ void maintainFlywheelSpeed(void *param)
 		{
 			currentSpeed = flywheel.get_actual_velocity();
 			error = targetFlywheelSpeed - currentSpeed;
-
 			if (flywheelOnTarget == false && abs(error) < 10)
 			{
 				flywheelOnTarget = true;
 			}
 			finalAdjustment = error * kp; //add the rest of PID to this calculation
 			flywheel.move_voltage(flywheel.get_voltage() + finalAdjustment);
-			std::cout << targetFlywheelSpeed << "\n";
 			pros::delay(5);
 		}
 		else
@@ -114,7 +114,7 @@ void maintainFlywheelSpeed(void *param)
 void opcontrol()
 {
 	pros::Controller master(CONTROLLER_MASTER);
-	pros::Task flywheelRPMMonitor(maintainFlywheelSpeed, parameter, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Flywheel speed task");
+	//pros::Task flywheelRPMMonitor(maintainFlywheelSpeed, parameter, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Flywheel speed task");
 
 	int leftDrive = 0;
 	int rightDrive = 0;
@@ -166,17 +166,28 @@ void opcontrol()
 
 		if (master.get_digital(DIGITAL_R1))
 		{
-			if (doingFirstShot == true)
+			flywheelSpeed = 12000;
+			flywheel.move_voltage(flywheelSpeed);
+			/*if (doingFirstShot == true)
 			{
 				targetFlywheelSpeed = 190;
 				maintainFlywheelSpeedRequested = true;
-			}
+			}*/
 		}
 		else
 		{
-			maintainFlywheelSpeedRequested = false;
+			if (flywheelSpeed > 0)
+			{
+				flywheelSpeed -= 3;
+			}
+			else if (flywheelSpeed < 0)
+			{
+				flywheelSpeed += 3;
+			}
+			flywheel.move_voltage(flywheelSpeed);
+			/*maintainFlywheelSpeedRequested = false;
 			targetFlywheelSpeed = 0;
-			doingFirstShot = true;
+			doingFirstShot = true;*/
 		}
 
 		if (flywheel.get_actual_velocity() <= 164 && firePrinted == false)

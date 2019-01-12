@@ -37,18 +37,28 @@ void drive(char dir, float inches, int topSpeed, int minSpeed)
   backLeft.tare_position();
   pros::lcd::print(0, "%d", frontRight.get_position());
 
-  float kp = 15;
+  float kp = 18;
+  float kd = 0;
   float ki = 1;
+  float integralActiveZone = 360 * 1.5;
   float lastErrorL = 0;
   float lastErrorR = 0;
   float totalErrorL = 0;
   float totalErrorR = 0;
+  float driveSpeedR = 0;
+  float driveSpeedL = 0;
   float lastDriveSpeedL = 0;
   float lastDriveSpeedR = 0;
   int tolerance = 80;
   int speedTolerance = 10;
   float increaseFactor = .3;
   float speedDeadband = 2500;
+  float proportionL = 0;
+  float integralL = 0;
+  float derivativeL = 0;
+  float proportionR = 0;
+  float integralR = 0;
+  float derivativeR = 0;
   if (minSpeed != 0)
   {
     speedDeadband = minSpeed;
@@ -58,77 +68,100 @@ void drive(char dir, float inches, int topSpeed, int minSpeed)
   {
     int errorR = ticks - frontRight.get_position();
     int errorL = ticks - frontLeft.get_position();
-    float driveSpeedR = errorR * kp;
-    float driveSpeedL = errorL * kp;
+
     while (abs(errorR) > tolerance || abs(errorL) > tolerance || frontRight.get_actual_velocity() > speedTolerance || backRight.get_actual_velocity() > speedTolerance || frontLeft.get_actual_velocity() > speedTolerance || backLeft.get_actual_velocity() > speedTolerance)
     {
+
+      errorR = (ticks - frontRight.get_position());
+      errorL = (ticks - frontLeft.get_position());
+
+      if (errorL != 0 && errorL <= integralActiveZone)
       {
-
-        errorR = (ticks - frontRight.get_position());
-        errorL = (ticks - frontLeft.get_position());
-        driveSpeedR = errorR * kp;
-        driveSpeedL = errorL * kp;
-
-        if (isBetween(driveSpeedL, -1 * speedDeadband, 0))
-        {
-          driveSpeedL = (-1 * speedDeadband);
-        }
-        else if (isBetween(driveSpeedL, 0, speedDeadband))
-        {
-          driveSpeedL = speedDeadband;
-        }
-
-        if (isBetween(driveSpeedR, -1 * speedDeadband, 0))
-        {
-          driveSpeedR = (-1 * speedDeadband);
-        }
-        else if (isBetween(driveSpeedR, 0, speedDeadband))
-        {
-          driveSpeedR = speedDeadband;
-        }
-
-        if (driveSpeedL > 0 && driveSpeedL >= speedDeadband && driveSpeedL > lastDriveSpeedL)
-        {
-          float currentSpeedL = lastDriveSpeedL + increaseFactor;
-          frontLeft.move_voltage(currentSpeedL);
-          backLeft.move_voltage(currentSpeedL);
-          lastDriveSpeedL = currentSpeedL;
-        }
-        else if (driveSpeedL < 0 && driveSpeedL <= speedDeadband && driveSpeedL < lastDriveSpeedL)
-        {
-          float currentSpeedL = lastDriveSpeedL - increaseFactor;
-          frontLeft.move_voltage(currentSpeedL);
-          backLeft.move_voltage(currentSpeedL);
-          lastDriveSpeedL = currentSpeedL;
-        }
-        else
-        {
-          frontLeft.move_voltage(driveSpeedL);
-          backLeft.move_voltage(driveSpeedL);
-          lastDriveSpeedL = driveSpeedL;
-        }
-
-        if (driveSpeedR > 0 && driveSpeedR >= speedDeadband && driveSpeedR > lastDriveSpeedR)
-        {
-          float currentSpeedR = lastDriveSpeedR + increaseFactor;
-          frontRight.move_voltage(currentSpeedR);
-          backRight.move_voltage(currentSpeedR);
-          lastDriveSpeedR = currentSpeedR;
-        }
-        else if (driveSpeedR < 0 && driveSpeedR <= speedDeadband && driveSpeedR < lastDriveSpeedR)
-        {
-          float currentSpeedR = lastDriveSpeedR - increaseFactor;
-          frontRight.move_voltage(currentSpeedR);
-          backRight.move_voltage(currentSpeedR);
-          lastDriveSpeedR = currentSpeedR;
-        }
-        else
-        {
-          frontRight.move_voltage(driveSpeedR);
-          backRight.move_voltage(driveSpeedR);
-          lastDriveSpeedR = driveSpeedR;
-        }
+        totalErrorL += errorL;
       }
+      else
+      {
+        totalErrorL = 0;
+      }
+      if (errorR != 0 && errorR < integralActiveZone)
+      {
+        totalErrorR = errorR;
+      }
+      else
+      {
+        totalErrorR = 0;
+      }
+      integralL = totalErrorL * ki;
+      integralR = totalErrorR * ki;
+
+      derivativeL = (errorL - totalErrorL) * kd;
+      derivativeR = (errorR - totalErrorR) * kd;
+
+      driveSpeedR = errorR * kp;
+      driveSpeedL = errorL * kp;
+
+      if (isBetween(driveSpeedL, -1 * speedDeadband, 0))
+      {
+        driveSpeedL = (-1 * speedDeadband);
+      }
+      else if (isBetween(driveSpeedL, 0, speedDeadband))
+      {
+        driveSpeedL = speedDeadband;
+      }
+
+      if (isBetween(driveSpeedR, -1 * speedDeadband, 0))
+      {
+        driveSpeedR = (-1 * speedDeadband);
+      }
+      else if (isBetween(driveSpeedR, 0, speedDeadband))
+      {
+        driveSpeedR = speedDeadband;
+      }
+
+      if (driveSpeedL > 0 && driveSpeedL >= speedDeadband && driveSpeedL > lastDriveSpeedL)
+      {
+        float currentSpeedL = lastDriveSpeedL + increaseFactor;
+        frontLeft.move_voltage(currentSpeedL);
+        backLeft.move_voltage(currentSpeedL);
+        lastDriveSpeedL = currentSpeedL;
+      }
+      else if (driveSpeedL < 0 && driveSpeedL <= speedDeadband && driveSpeedL < lastDriveSpeedL)
+      {
+        float currentSpeedL = lastDriveSpeedL - increaseFactor;
+        frontLeft.move_voltage(currentSpeedL);
+        backLeft.move_voltage(currentSpeedL);
+        lastDriveSpeedL = currentSpeedL;
+      }
+      else
+      {
+        frontLeft.move_voltage(driveSpeedL);
+        backLeft.move_voltage(driveSpeedL);
+        lastDriveSpeedL = driveSpeedL;
+      }
+
+      if (driveSpeedR > 0 && driveSpeedR >= speedDeadband && driveSpeedR > lastDriveSpeedR)
+      {
+        float currentSpeedR = lastDriveSpeedR + increaseFactor;
+        frontRight.move_voltage(currentSpeedR);
+        backRight.move_voltage(currentSpeedR);
+        lastDriveSpeedR = currentSpeedR;
+      }
+      else if (driveSpeedR < 0 && driveSpeedR <= speedDeadband && driveSpeedR < lastDriveSpeedR)
+      {
+        float currentSpeedR = lastDriveSpeedR - increaseFactor;
+        frontRight.move_voltage(currentSpeedR);
+        backRight.move_voltage(currentSpeedR);
+        lastDriveSpeedR = currentSpeedR;
+      }
+      else
+      {
+        frontRight.move_voltage(driveSpeedR);
+        backRight.move_voltage(driveSpeedR);
+        lastDriveSpeedR = driveSpeedR;
+      }
+
+      lastErrorL = errorL;
+      lastErrorR = errorR;
     }
     frontRight.move_voltage(0);
     backRight.move_voltage(0);
@@ -457,10 +490,11 @@ void stopIntake()
 
 void runIntake(char dir, int ticks, bool waitForCompletion)
 {
-  if (dir == 'u')
+  if (dir == 'd')
   { //u is up, d is down
     ticks *= -1;
   }
+
   int originalPos = intake.get_position();
   intake.move_relative(ticks, 200);
   if (waitForCompletion)
@@ -472,13 +506,25 @@ void runIntake(char dir, int ticks, bool waitForCompletion)
   }
 }
 
+void prepareShot()
+{
+  while (!(isBetween(ballSonar.get_value(), 50, 80)))
+  {
+    indexer.move_velocity(200);
+    intake.move_velocity(200);
+  }
+  indexer.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_BRAKE);
+  intake.move_velocity(0);
+}
+
 void shootWhenReady(int requiredSpeed, int intakeTicks, bool stopFlywheelOnFinish)
 {
   while (flywheel.get_actual_velocity() < requiredSpeed)
   {
     pros::delay(2);
   }
-  runIntake('u', intakeTicks, true);
+  indexer.move_relative(intakeTicks, -200);
+
   pros::delay(500);
   if (stopFlywheelOnFinish)
   {
@@ -641,13 +687,15 @@ void auto3() //Blue Back
 void auto4() //Red Front
 {
   startFlywheel(10500);
-  drive('f', 40, 150, 4000);
+  drive('f', 38, 150, 4000);
   runIntake('u', 800, true);
-  drive('b', 42, 150, 0);
+  drive('b', 36, 150, 0);
   turnToTarget(-90, 100);
-  shootWhenReady(165, 400, false);
+  drive('f', 3, 100, 0);
+  shootWhenReady(165, 800, false);
   drive('f', 30, 50, 0);
   turnToTarget(-86, 100);
+  prepareShot();
   shootWhenReady(165, 600, true);
   drive('f', 25, 100, 0);
 }
