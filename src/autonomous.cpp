@@ -643,6 +643,7 @@ void auto1() //Blue Front
   shootWhenReady(165, 400, false);
   drive('f', 30, 50, 0);
   turnToTarget(86, 100);
+  prepareShot();
   shootWhenReady(165, 600, true);
   drive('f', 25, 100, 0);
 }
@@ -660,6 +661,7 @@ void auto2()
   turnToTarget(3, 100);
   drive('f', 29, 90, true);
   turnToTarget(3, 75);
+  prepareShot();
   shootWhenReady(160, 700, true);
   //turnToTarget(-10, 60);
   drive('f', 30, 200, true);
@@ -674,6 +676,7 @@ void auto3() //Blue Back
   //turnToTarget(-45, 100);
   turnToTarget(65.5, 100);
   shootWhenReady(188, 400, false);
+  prepareShot();
   pros::delay(250);
   shootWhenReady(170, 600, true);
   startIntake();
@@ -689,6 +692,7 @@ void auto4() //Red Front
   startFlywheel(10500);
   drive('f', 38, 150, 4000);
   runIntake('u', 800, true);
+  turnToTarget(0, 100);
   drive('b', 36, 150, 0);
   turnToTarget(-90, 100);
   drive('f', 3, 100, 0);
@@ -712,6 +716,7 @@ void auto5()
   turnToTarget(-3, 100);
   drive('f', 29, 90, true);
   turnToTarget(-3, 75);
+  prepareShot();
   shootWhenReady(160, 700, true);
   //turnToTarget(-10, 60);
   drive('f', 30, 200, true);
@@ -725,6 +730,7 @@ void auto6() //Red Back
   //turnToTarget(-45, 100);
   turnToTarget(-65.5, 100);
   shootWhenReady(188, 400, false);
+  prepareShot();
   pros::delay(250);
   shootWhenReady(170, 600, true);
   startIntake();
