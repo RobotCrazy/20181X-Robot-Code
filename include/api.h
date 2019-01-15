@@ -41,8 +41,8 @@
 
 #define PROS_VERSION_MAJOR 3
 #define PROS_VERSION_MINOR 1
-#define PROS_VERSION_PATCH 4
-#define PROS_VERSION_STRING "3.1.4"
+#define PROS_VERSION_PATCH 5
+#define PROS_VERSION_STRING "3.1.5"
 
 #define PROS_ERR (INT32_MAX)
 #define PROS_ERR_F (INFINITY)
@@ -64,4 +64,4 @@
 #include "pros/vision.hpp"
 #endif
 
-#endif // _PROS_API_H_
+#endif  // _PROS_API_H_
