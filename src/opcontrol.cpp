@@ -14,29 +14,6 @@
  * task, not resume it from where it left off.
  */
 
-#define FRONT_LEFT_PORT 4
-#define BACK_LEFT_PORT 7
-#define FRONT_RIGHT_PORT 6
-#define BACK_RIGHT_PORT 5
-#define INTAKE_PORT 12
-#define FLY_WHEEL 14
-#define CAP_FLIPPER 9
-#define INDEXER_PORT 19
-#define BALL_SONAR_PORT_PING 'A'
-#define BALL_SONAR_PORT_ECHO 'B'
-#define GYRO_PORT 'D'
-
-pros::Motor frontLeft(FRONT_LEFT_PORT);
-pros::Motor backLeft(BACK_LEFT_PORT);
-pros::Motor frontRight(FRONT_RIGHT_PORT, true);
-pros::Motor backRight(BACK_RIGHT_PORT, true);
-pros::Motor intake(INTAKE_PORT);
-pros::Motor flywheel(FLY_WHEEL);
-pros::Motor flipper(CAP_FLIPPER);
-pros::Motor indexer(INDEXER_PORT, true);
-pros::ADIUltrasonic ballSonar(BALL_SONAR_PORT_PING, BALL_SONAR_PORT_ECHO);
-pros::ADIGyro gyro(GYRO_PORT);
-
 /**************Define important variables here***************************/
 bool holdFlipperRequested = false;
 bool flywheelRPMDropped = false;
@@ -62,10 +39,11 @@ bool maintainFlywheelSpeedRequested = false;
 bool flywheelOnTarget = false;
 bool doingFirstShot = true;
 int targetFlywheelSpeed = 0;
+
 void detectFlywheelSpeedDrop()
 {
 	int currentSpeed = flywheel.get_actual_velocity();
-	if (flywheelOnTarget == true && currentSpeed - targetFlywheelSpeed > 10)
+	if (flywheelOnTarget == true && targetFlywheelSpeed - currentSpeed > 10)
 	{
 		targetFlywheelSpeed = 150;
 		doingFirstShot = false;
@@ -114,7 +92,7 @@ void maintainFlywheelSpeed(void *param)
 void opcontrol()
 {
 	pros::Controller master(CONTROLLER_MASTER);
-	pros::Task flywheelRPMMonitor(maintainFlywheelSpeed, parameter, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Flywheel speed task");
+	//pros::Task flywheelRPMMonitor(maintainFlywheelSpeed, parameter, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Flywheel speed task");
 
 	int leftDrive = 0;
 	int rightDrive = 0;
@@ -166,17 +144,20 @@ void opcontrol()
 
 		if (master.get_digital(DIGITAL_R1))
 		{
-			if (doingFirstShot == true)
-			{
-				targetFlywheelSpeed = 190;
-				maintainFlywheelSpeedRequested = true;
-			}
+			flywheelSpeed = 12000;
+			flywheel.move_voltage(flywheelSpeed);
 		}
 		else
 		{
-			maintainFlywheelSpeedRequested = false;
-			targetFlywheelSpeed = 0;
-			doingFirstShot = true;
+			if (flywheelSpeed > 0)
+			{
+				flywheelSpeed -= 3;
+			}
+			else if (flywheelSpeed < 0)
+			{
+				flywheelSpeed += 3;
+			}
+			flywheel.move_voltage(flywheelSpeed);
 		}
 
 		if (flywheel.get_actual_velocity() <= 164 && firePrinted == false)

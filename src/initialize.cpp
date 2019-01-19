@@ -1,5 +1,28 @@
 #include "main.h"
 
+#define FRONT_LEFT_PORT 4
+#define BACK_LEFT_PORT 7
+#define FRONT_RIGHT_PORT 6
+#define BACK_RIGHT_PORT 5
+#define INTAKE_PORT 12
+#define FLY_WHEEL 14
+#define CAP_FLIPPER 9
+#define INDEXER_PORT 19
+#define BALL_SONAR_PORT_PING 'A'
+#define BALL_SONAR_PORT_ECHO 'B'
+#define GYRO_PORT 'D'
+
+pros::Motor frontLeft(FRONT_LEFT_PORT);
+pros::Motor backLeft(BACK_LEFT_PORT);
+pros::Motor frontRight(FRONT_RIGHT_PORT, true);
+pros::Motor backRight(BACK_RIGHT_PORT, true);
+pros::Motor intake(INTAKE_PORT);
+pros::Motor flywheel(FLY_WHEEL);
+pros::Motor flipper(CAP_FLIPPER);
+pros::Motor indexer(INDEXER_PORT, true);
+pros::ADIUltrasonic ballSonar(BALL_SONAR_PORT_PING, BALL_SONAR_PORT_ECHO);
+pros::ADIGyro gyro(GYRO_PORT);
+
 bool readyToExitAutoSelector = false;
 void autonSelector();
 
@@ -30,6 +53,8 @@ void incrementAutoMode()
 		autoMode++;
 	}
 }
+
+
 
 /**
  * Runs initialization code. This occurs as soon as the program is started.

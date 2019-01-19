@@ -34,7 +34,13 @@
  */
 #define PROS_USE_LITERALS
 
+/**
+ * You should add more #includes here
+ */
 #include "api.h"
+//#include "okapi/api.hpp"
+//#include "pros/api_legacy.h"
+#include "pros/rtos.hpp"
 
 extern pros::Motor frontLeft;
 extern pros::Motor backLeft;
@@ -44,22 +50,17 @@ extern pros::Motor intake;
 extern pros::Motor indexer;
 extern pros::Motor flywheel;
 extern pros::Motor flipper;
+
 extern pros::ADIGyro gyro;
 extern pros::ADIUltrasonic ballSonar;
 extern pros::Controller master;
+
 extern int autoMode;
 extern bool maintainFlywheelSpeedRequested;
 
 //Function Externs here/////
 extern bool isBetween(float number, float rangeLower, float rangeUpper);
 extern void maintainFlywheelSpeed(void *param);
-
-/**
- * You should add more #includes here
- */
-//#include "okapi/api.hpp"
-//#include "pros/api_legacy.h"
-#include "pros/rtos.hpp"
 
 /**
  * If you find doing pros::Motor() to be tedious and you'd prefer just to do
@@ -71,7 +72,7 @@ extern void maintainFlywheelSpeed(void *param);
  */
 //using namespace pros;
 // using namespace pros::literals;
-// using namespace okapi;
+//using namespace okapi;
 
 /**
  * Prototypes for the competition control tasks are redefined here to ensure
