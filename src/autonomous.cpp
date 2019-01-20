@@ -34,6 +34,7 @@ void drive(char dir, float inches, int topSpeed, int minSpeed)
 
   float kp = 20;
   double ki = .0003;
+  ki = .001;
   float kd = 0;
 
   int integralZone = 150;
@@ -45,6 +46,8 @@ void drive(char dir, float inches, int topSpeed, int minSpeed)
   float totalErrorR = 0;
   float lastDriveSpeedL = 0;
   float lastDriveSpeedR = 0;
+  int startingAngle = gyro.get_value();
+  int angleError = 0;
 
   float proportionL = 0;
   float proportionR = 0;
@@ -52,15 +55,18 @@ void drive(char dir, float inches, int topSpeed, int minSpeed)
   double integralR = 0;
   float derivitiveL = 0;
   float derivitiveR = 0;
+  float angleAdjustment = 0;
 
-  int tolerance = 80;
-  int speedTolerance = 10;
-  float increaseFactor = .05;
-  float speedDeadband = 0;
-  /*if (minSpeed != 0)
+  int tolerance = 40;
+  int speedTolerance = 5;
+  int angleDiffTolerance = 20;
+  float increaseFactor = .1;
+  float angleAdjustmentFactor = .5; //Try increasing angleAdjustmentFactor as error gets smaller
+  float speedDeadband = 1500;
+  if (minSpeed != 0)
   {
     speedDeadband = minSpeed;
-  }*/
+  }
 
   if (dir == 'f')
   {
@@ -68,11 +74,20 @@ void drive(char dir, float inches, int topSpeed, int minSpeed)
     int errorR = ticks - frontRight.get_position();
     int errorL = ticks - frontLeft.get_position();
 
-    while (abs(errorR) > tolerance || abs(errorL) > tolerance || frontRight.get_actual_velocity() > speedTolerance || backRight.get_actual_velocity() > speedTolerance || frontLeft.get_actual_velocity() > speedTolerance || backLeft.get_actual_velocity() > speedTolerance)
+    while (abs(errorR) > tolerance || abs(errorL) > tolerance ||
+           frontRight.get_actual_velocity() > speedTolerance ||
+           backRight.get_actual_velocity() > speedTolerance ||
+           frontLeft.get_actual_velocity() > speedTolerance ||
+           backLeft.get_actual_velocity() > speedTolerance ||
+           abs(frontRight.get_position() - frontLeft.get_position()) > angleDiffTolerance ||
+           abs(backRight.get_position() - backLeft.get_position()) > angleDiffTolerance ||
+           abs(angleError) > 10)
     {
 
       errorR = (ticks - frontRight.get_position());
       errorL = (ticks - frontLeft.get_position());
+
+      angleError = startingAngle - gyro.get_value();
 
       proportionL = errorL * kp;
       proportionR = errorR * kp;
@@ -121,32 +136,41 @@ void drive(char dir, float inches, int topSpeed, int minSpeed)
       driveSpeedR = (proportionR + derivitiveR + integralR);
       driveSpeedL = (proportionL + derivitiveL + integralL);
 
-      /*if (isBetween(driveSpeedL, -1 * speedDeadband, 0))
-        {
-          driveSpeedL = (-1 * speedDeadband);
-        }
-        else if (isBetween(driveSpeedL, 0, speedDeadband))
-        {
-          driveSpeedL = speedDeadband;
-        }
+      if (isBetween(driveSpeedL, -1 * speedDeadband, 0))
+      {
+        driveSpeedL = (-1 * speedDeadband);
+      }
+      else if (isBetween(driveSpeedL, 0, speedDeadband))
+      {
+        driveSpeedL = speedDeadband;
+      }
 
-        if (isBetween(driveSpeedR, -1 * speedDeadband, 0))
-        {
-          driveSpeedR = (-1 * speedDeadband);
-        }
-        else if (isBetween(driveSpeedR, 0, speedDeadband))
-        {
-          driveSpeedR = speedDeadband;
-        }*/
+      if (isBetween(driveSpeedR, -1 * speedDeadband, 0))
+      {
+        driveSpeedR = (-1 * speedDeadband);
+      }
+      else if (isBetween(driveSpeedR, 0, speedDeadband))
+      {
+        driveSpeedR = speedDeadband;
+      }
 
-      if (driveSpeedL > 0 && driveSpeedL >= speedDeadband && driveSpeedL > lastDriveSpeedL)
+      if (angleError < 0)
+      {
+        driveSpeedR += (angleError * angleAdjustmentFactor);
+      }
+      else if (angleError > 0)
+      {
+        driveSpeedL += (angleError * angleAdjustmentFactor);
+      }
+
+      if (driveSpeedL > 0 && driveSpeedL > lastDriveSpeedL)
       {
         float currentSpeedL = lastDriveSpeedL + increaseFactor;
         frontLeft.move_voltage(currentSpeedL);
         backLeft.move_voltage(currentSpeedL);
         lastDriveSpeedL = currentSpeedL;
       }
-      else if (driveSpeedL < 0 && driveSpeedL <= speedDeadband && driveSpeedL < lastDriveSpeedL)
+      else if (driveSpeedL < 0 && driveSpeedL < lastDriveSpeedL)
       {
         float currentSpeedL = lastDriveSpeedL - increaseFactor;
         frontLeft.move_voltage(currentSpeedL);
@@ -160,14 +184,14 @@ void drive(char dir, float inches, int topSpeed, int minSpeed)
         lastDriveSpeedL = driveSpeedL;
       }
 
-      if (driveSpeedR > 0 && driveSpeedR >= speedDeadband && driveSpeedR > lastDriveSpeedR)
+      if (driveSpeedR > 0 && driveSpeedR > lastDriveSpeedR)
       {
         float currentSpeedR = lastDriveSpeedR + increaseFactor;
         frontRight.move_voltage(currentSpeedR);
         backRight.move_voltage(currentSpeedR);
         lastDriveSpeedR = currentSpeedR;
       }
-      else if (driveSpeedR < 0 && driveSpeedR <= speedDeadband && driveSpeedR < lastDriveSpeedR)
+      else if (driveSpeedR < 0 && driveSpeedR < lastDriveSpeedR)
       {
         float currentSpeedR = lastDriveSpeedR - increaseFactor;
         frontRight.move_voltage(currentSpeedR);
@@ -189,6 +213,7 @@ void drive(char dir, float inches, int topSpeed, int minSpeed)
     frontLeft.move_voltage(0);
     backLeft.move_voltage(0);
   }
+
   else if (dir == 'b')
   {
     kp *= -1;
@@ -626,6 +651,7 @@ void turnToTarget(float targetAngle, int maxSpeed)
 
 void testAuto()
 {
+  pros::delay(3000);
   startIntake();
   drive('f', 41, 150, 0);
   stopIntake();
