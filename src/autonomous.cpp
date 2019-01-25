@@ -33,16 +33,6 @@ void setRightDrive(int voltage)
   }
 }
 
-bool intakeUpRequested = false; //boolean for state of intake request
-void monitorIntake()
-{
-  while (true)
-  {
-
-    pros::delay(5);
-  }
-}
-
 void setLeftDrive(int voltage)
 {
   if (voltage == 0)
@@ -56,6 +46,49 @@ void setLeftDrive(int voltage)
   {
     frontLeft.move_voltage(voltage);
     backLeft.move_voltage(voltage);
+  }
+}
+
+bool intakeUpRequested = false; //boolean for state of intake request
+bool prepareShotRequested = false;
+char *parameter2;
+void monitorIntake(void *param)
+{
+  while (true)
+  {
+    if (intakeUpRequested == true)
+    {
+      if (!(isBetween(ballSonar.get_value(), 50, 80)))
+      {
+        intake.move_velocity(200);
+        indexer.move_velocity(200);
+      }
+      else
+      {
+        intake.move_velocity(200);
+      }
+    }
+    else if (prepareShotRequested == true)
+    {
+      if (!(isBetween(ballSonar.get_value(), 50, 80)))
+      {
+        intake.move_velocity(200);
+        indexer.move_velocity(200);
+      }
+      else
+      {
+        intake.move_velocity(0);
+        indexer.move_velocity(0);
+        indexer.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_BRAKE);
+      }
+    }
+    else
+    {
+      intake.move_velocity(0);
+      indexer.move_velocity(0);
+      indexer.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_BRAKE);
+    }
+    pros::delay(5);
   }
 }
 
@@ -444,12 +477,14 @@ void stopFlywheel()
 
 void startIntake()
 {
-  intake.move_velocity(200);
+  intakeUpRequested = true;
+  prepareShotRequested = false;
 }
 
 void stopIntake()
 {
-  intake.move_velocity(0);
+  intakeUpRequested = false;
+  prepareShotRequested = true;
 }
 
 void prepareShot()
@@ -710,6 +745,7 @@ void auto6() //Red Back
 }
 void autonomous()
 {
+  pros::Task flywheelRPMMonitor(monitorIntake, parameter2, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Intake auto movement task");
   autoMode = 100;
   if (autoMode == 1)
   {
