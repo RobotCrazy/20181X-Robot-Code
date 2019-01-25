@@ -102,6 +102,7 @@ void opcontrol()
 
 	while (true)
 	{
+		std::cout << "Gyro:" << gyro.get_value() << "\n";
 		leftDrive = master.get_analog(ANALOG_LEFT_Y);
 		rightDrive = master.get_analog(ANALOG_RIGHT_Y);
 		frontLeft.move(leftDrive);
