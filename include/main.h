@@ -53,15 +53,33 @@ extern pros::Motor flywheel;
 extern pros::Motor flipper;
 
 extern pros::ADIGyro gyro;
-extern pros::ADIUltrasonic ballSonar;
+extern pros::ADIUltrasonic indexerSonar;
+extern pros::ADIUltrasonic intakeSonar;
 extern pros::Controller master;
 
 extern int autoMode;
+extern int targetFlywheelSpeed;
 extern bool maintainFlywheelSpeedRequested;
+extern bool flywheelOnTarget;
+extern char *parameter3;
+extern bool intakeUpRequested; //boolean for state of intake request
+extern bool intakeOutRequested;
+extern bool prepareShotRequested;
+extern char *parameter2;
+extern int targetShootingTicks;
+extern bool shootBallRequested;
+extern int globalTargetAngle;
+//extern bool maintainFlywheelSpeedRequested;
 
 //Function Externs here/////
 extern bool isBetween(float number, float rangeLower, float rangeUpper);
-extern void maintainFlywheelSpeed(void *param);
+//extern void maintainFlywheelSpeed(void *param);
+
+//Task Externs here////////
+/*pros::Task flywheelRPMMonitor;
+pros::Task intakeMonitor;*/
+extern pros::Task flywheelRPMMonitor;
+extern pros::Task intakeMonitor;
 
 /**
  * If you find doing pros::Motor() to be tedious and you'd prefer just to do

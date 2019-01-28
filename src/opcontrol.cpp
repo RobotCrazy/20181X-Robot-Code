@@ -35,7 +35,7 @@ void holdFlipper(int pos)
 	}
 }
 
-bool maintainFlywheelSpeedRequested = false;
+/*bool maintainFlywheelSpeedRequested = false;
 bool flywheelOnTarget = false;
 bool doingFirstShot = true;
 int targetFlywheelSpeed = 0;
@@ -87,10 +87,15 @@ void maintainFlywheelSpeed(void *param)
 		}
 		detectFlywheelSpeedDrop();
 	}
-}
+}*/
 
 void opcontrol()
 {
+	/*intakeUpRequested = false;
+	prepareShotRequested = false;
+	maintainFlywheelSpeedRequested = false;*/
+	flywheelRPMMonitor.suspend();
+	intakeMonitor.suspend();
 	pros::Controller master(CONTROLLER_MASTER);
 	//pros::Task flywheelRPMMonitor(maintainFlywheelSpeed, parameter, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Flywheel speed task");
 
@@ -102,7 +107,7 @@ void opcontrol()
 
 	while (true)
 	{
-		std::cout << "Gyro:" << gyro.get_value() << "\n";
+		std::cout << "Sonar: " << intakeSonar.get_value() << "\n";
 		leftDrive = master.get_analog(ANALOG_LEFT_Y);
 		rightDrive = master.get_analog(ANALOG_RIGHT_Y);
 		frontLeft.move(leftDrive);
@@ -112,15 +117,22 @@ void opcontrol()
 
 		if (master.get_digital(DIGITAL_L2))
 		{
-			if (!(isBetween(ballSonar.get_value(), 50, 80)))
+			if (!(isBetween(indexerSonar.get_value(), 50, 80)))
 			{
 				intake.move_velocity(200);
 				indexer.move_velocity(200);
 			}
-			else
+			else if (!(isBetween(intakeSonar.get_value(), 30, 80)))
 			{
 				intake.move_velocity(200);
 				indexer.move_velocity(0);
+				indexer.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_BRAKE);
+			}
+			else
+			{
+				intake.move_velocity(0);
+				indexer.move_velocity(0);
+				intake.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_BRAKE);
 				indexer.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_BRAKE);
 			}
 		}

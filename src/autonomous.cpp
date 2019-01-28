@@ -6,6 +6,7 @@
 
 double pi = (atan(1) * 4);
 double wheelCircumference = (WHEEL_RADIUS * 2 * pi);
+int globalTargetAngle = 0;
 
 double degreeToRadian(double degrees)
 {
@@ -49,49 +50,6 @@ void setLeftDrive(int voltage)
   }
 }
 
-bool intakeUpRequested = false; //boolean for state of intake request
-bool prepareShotRequested = false;
-char *parameter2;
-void monitorIntake(void *param)
-{
-  while (true)
-  {
-    if (intakeUpRequested == true)
-    {
-      if (!(isBetween(ballSonar.get_value(), 50, 80)))
-      {
-        intake.move_velocity(200);
-        indexer.move_velocity(200);
-      }
-      else
-      {
-        intake.move_velocity(200);
-      }
-    }
-    else if (prepareShotRequested == true)
-    {
-      if (!(isBetween(ballSonar.get_value(), 50, 80)))
-      {
-        intake.move_velocity(200);
-        indexer.move_velocity(200);
-      }
-      else
-      {
-        intake.move_velocity(0);
-        indexer.move_velocity(0);
-        indexer.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_BRAKE);
-      }
-    }
-    else
-    {
-      intake.move_velocity(0);
-      indexer.move_velocity(0);
-      indexer.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_BRAKE);
-    }
-    pros::delay(5);
-  }
-}
-
 void gyroscopeFiltering()
 {
   while (true)
@@ -106,7 +64,7 @@ void gyroscopeFiltering()
  * minSpeed - The minimum value the drive base can go at
  * Note: Set minSpeed to 0 to leave the deadband at its default
  **/
-void drive(char dir, float inches, int topSpeed, int minSpeed)
+/*void drive(char dir, float inches, int topSpeed, int minSpeed)
 {
 
   int ticks = (int)((inches / (pi * WHEEL_RADIUS)) * 180);
@@ -165,7 +123,8 @@ void drive(char dir, float inches, int topSpeed, int minSpeed)
            backLeft.get_actual_velocity() > speedTolerance ||
            abs(frontRight.get_position() - frontLeft.get_position()) > angleDiffTolerance ||
            abs(backRight.get_position() - backLeft.get_position()) > angleDiffTolerance
-           /*abs(angleError) > 10*/)
+           /*abs(angleError) > 10*/
+/*)
     {
 
       errorR = (ticks - frontRight.get_position());
@@ -247,7 +206,7 @@ void drive(char dir, float inches, int topSpeed, int minSpeed)
         driveSpeedR += (angleError * angleAdjustmentFactor);
       }*/
 
-      if (driveSpeedL > 0 && lastDriveSpeedL >= 0 && driveSpeedL > lastDriveSpeedL)
+/*if (driveSpeedL > 0 && lastDriveSpeedL >= 0 && driveSpeedL > lastDriveSpeedL)
       {
         float currentSpeedL = lastDriveSpeedL + increaseFactor;
         frontLeft.move_voltage(currentSpeedL);
@@ -380,22 +339,29 @@ void drive(char dir, float inches, int topSpeed, int minSpeed)
     frontLeft.move_voltage(0);
     backLeft.move_voltage(0);
   }
-}
+}*/
 
-void driveV2(char dir, float inches)
+void drive(char dir, float inches)
 {
+
+  frontRight.tare_position();
+  backRight.tare_position();
+  frontLeft.tare_position();
+  backLeft.tare_position();
+
   int ticks = (int)((inches / (pi * WHEEL_RADIUS)) * 180);
+  int angleCorrectionFactor = 60;
+  int startingAngle = globalTargetAngle;
 
   //P Variables Here//
-  int errorL = 0;
-  int errorR = 0;
   int error = ticks - ((frontRight.get_position() + backRight.get_position() + frontLeft.get_position() + backLeft.get_position()) / 4);
-  int driveSpeedL = 0;
-  int driveSpeedR = 0;
-  int driveSpeed = 0;
+  float driveSpeed = 0;
+  float lastDriveSpeed = 0;
+  int angleError = 0;
 
   //Constants here//
   float kp = 20;
+  float increaseFactor = .1;
 
   //Tolerance Variables Here//
   int speedTolerance = 10;
@@ -403,11 +369,6 @@ void driveV2(char dir, float inches)
 
   //Deadbands//
   int speedDeadband = 2500;
-
-  frontRight.tare_position();
-  backRight.tare_position();
-  frontLeft.tare_position();
-  backLeft.tare_position();
 
   if (dir == 'b')
   {
@@ -420,11 +381,11 @@ void driveV2(char dir, float inches)
          abs(frontLeft.get_actual_velocity()) > speedTolerance ||
          abs(backLeft.get_actual_velocity()) > speedTolerance)
   {
+    angleError = startingAngle - gyro.get_value();
+
     error = ticks - ((frontRight.get_position() + backRight.get_position() + frontLeft.get_position() + backLeft.get_position()) / 4);
-    //errorR = ticks - ((frontLeft.get_position() + backLeft.get_position()) / 2);
 
     driveSpeed = error * kp;
-    //driveSpeedR = errorR * kp;
 
     if (isBetween(driveSpeed, -1 * speedDeadband, 0))
     {
@@ -435,8 +396,28 @@ void driveV2(char dir, float inches)
       driveSpeed = speedDeadband;
     }
 
-    setRightDrive(driveSpeed);
-    setLeftDrive(driveSpeed);
+    /*if (driveSpeed > 0 && driveSpeed > lastDriveSpeed)
+    {
+      float currentSpeed = lastDriveSpeed + increaseFactor;
+      setLeftDrive(currentSpeed);
+      setRightDrive(currentSpeed);
+      lastDriveSpeed = currentSpeed;
+    }
+    else if (driveSpeed < 0 && driveSpeed < lastDriveSpeed)
+    {
+      float currentSpeed = lastDriveSpeed - increaseFactor;
+      setLeftDrive(currentSpeed);
+      setRightDrive(currentSpeed);
+      lastDriveSpeed = currentSpeed;
+    }
+    else
+    {
+      setLeftDrive(driveSpeed);
+      setRightDrive(driveSpeed);
+      lastDriveSpeed = driveSpeed;
+    }*/
+    setLeftDrive(driveSpeed + angleError * angleCorrectionFactor);
+    setRightDrive(driveSpeed - angleError * angleCorrectionFactor);
   }
   setRightDrive(0);
   setLeftDrive(0);
@@ -465,20 +446,30 @@ void driveTime(char dir, int milliseconds, int topSpeed)
   backLeft.move_voltage(0);
 }
 
-void startFlywheel(int voltage)
+void startFlywheel(int targetSpeed)
 {
-  flywheel.move_voltage(voltage);
+  maintainFlywheelSpeedRequested = true;
+  targetFlywheelSpeed = targetSpeed;
 }
 
 void stopFlywheel()
 {
-  flywheel.move_voltage(0);
+  maintainFlywheelSpeedRequested = false;
+  targetFlywheelSpeed = 0;
 }
 
 void startIntake()
 {
   intakeUpRequested = true;
   prepareShotRequested = false;
+}
+
+void startIntakeOut()
+{
+  intakeUpRequested = false;
+  prepareShotRequested = false;
+  shootBallRequested = false;
+  intakeOutRequested = true;
 }
 
 void stopIntake()
@@ -489,7 +480,7 @@ void stopIntake()
 
 void prepareShot()
 {
-  while (!(isBetween(ballSonar.get_value(), 50, 80)))
+  while (!(isBetween(indexerSonar.get_value(), 50, 80)))
   {
     intake.move_velocity(200);
     indexer.move_velocity(200);
@@ -521,8 +512,10 @@ void shootWhenReady(int requiredSpeed, int intakeTicks, bool stopFlywheelOnFinis
   {
     pros::delay(2);
   }
-  runIntake('u', intakeTicks, true);
+  intakeMonitor.suspend();
+  indexer.move_relative(intakeTicks, 200);
   pros::delay(500);
+  intakeMonitor.resume();
   if (stopFlywheelOnFinish)
   {
     stopFlywheel();
@@ -570,8 +563,8 @@ void turn(char dir, int degrees, int topSpeed, bool waitForCompletion)
 void turnToTarget(float targetAngle, int maxSpeed)
 {
   float kp = 20;
-  float ki = 20;
   float scaledAngle = targetAngle * .78;
+  globalTargetAngle = scaledAngle * 10;
   int error = (scaledAngle * 10.0) - gyro.get_value();
   int driveSpeed = error * kp;
   int tolerance = 10;
@@ -614,20 +607,52 @@ void turnToTarget(float targetAngle, int maxSpeed)
  * from where it left off.
  */
 
+/*vision::signature BLUEFLAG(1, -4321, -2115, -3218, 7633, 13239, 10436, 2.600, 0);
+vision::signature REDFLAG(2, 10269, 14613, 12441, -1509, -231, -870, 3.400, 0);
+vision::signature SIG_3(3, 0, 0, 0, 0, 0, 0, 3.000, 0);
+vision::signature SIG_4(4, 0, 0, 0, 0, 0, 0, 3.000, 0);
+vision::signature SIG_5(5, 0, 0, 0, 0, 0, 0, 3.000, 0);
+vision::signature SIG_6(6, 0, 0, 0, 0, 0, 0, 3.000, 0);
+vision::signature SIG_7(7, 0, 0, 0, 0, 0, 0, 3.000, 0);
+vex::vision vision1(vex::PORT1, 50, BLUEFLAG, REDFLAG, SIG_3, SIG_4, SIG_5, SIG_6, SIG_7);*/
+
 void testAuto()
 {
-  //pros::delay(3000);
+  startFlywheel(190);
   startIntake();
+  drive('f', 35);
+  drive('b', 5);
+  stopIntake();
+  drive('b', 32);
+  turnToTarget(-88, 100);
+  drive('f', 10);
+  shootWhenReady(180, 1000, false);
+  drive('f', 19);
+  shootWhenReady(180, 1000, true);
+  turnToTarget(-98, 100);
+  drive('f', 18);
+  drive('b', 25);
+  startIntakeOut();
+  turnToTarget(0, 100);
+  drive('f', 41);
+  turnToTarget(90, 100);
+  drive('b', 30);
+
+  //pros::delay(3000);
+  //startFlywheel(190);
+  //startIntake();
   //pros::delay(5000);
-  driveV2('f', 40);
-  driveV2('b', 5);
-  prepareShot();
+  //drive('b', 35);
+  //drive('f', 35);
+  /*drive('b', 5);
+  //prepareShot();
   stopIntake();
-  driveV2('b', 30);
+  drive('b', 35);
   turnToTarget(-90, 100);
-  stopIntake();
+  drive('f', 12);
+  shootWhenReady(170, 500, false);*/
 }
-void autoOriginal() //Blue Front Original
+/*void autoOriginal() //Blue Front Original
 {
   startFlywheel(10000);
   shootWhenReady(170, 700, true);
@@ -742,12 +767,15 @@ void auto6() //Red Back
   stopIntake();
   turnToTarget(-180, 100);
   drive('b', 50, 200, 0);
-}
+}*/
 void autonomous()
 {
-  pros::Task flywheelRPMMonitor(monitorIntake, parameter2, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Intake auto movement task");
+
+  //pros::Task flywheelRPMMonitor(maintainFlywheelSpeed, parameter3, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Flywheel speed task");
+  //pros::Task intakeMonitor(monitorIntake, parameter2, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Intake auto movement task");
+
   autoMode = 100;
-  if (autoMode == 1)
+  /*if (autoMode == 1)
   {
     auto1();
   }
@@ -770,8 +798,10 @@ void autonomous()
   else if (autoMode == 6)
   {
     auto6();
-  }
+  }*/
   testAuto();
+  /*flywheelRPMMonitor.suspend();
+  intakeMonitor.suspend();*/
 
   /*startFlywheel(10000);
   drive('f', 41, 150, true);

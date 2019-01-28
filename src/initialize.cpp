@@ -8,9 +8,11 @@
 #define FLY_WHEEL 14
 #define CAP_FLIPPER 9
 #define INDEXER_PORT 19
-#define BALL_SONAR_PORT_PING 'A'
-#define BALL_SONAR_PORT_ECHO 'B'
-#define GYRO_PORT 'D'
+#define INDEXER_SONAR_PORT_PING 'A'
+#define INDEXER_SONAR_PORT_ECHO 'B'
+#define INTAKE_SONAR_PORT_PING 'C'
+#define INTAKE_SONAR_PORT_ECHO 'D'
+#define GYRO_PORT 'E'
 
 pros::Motor frontLeft(FRONT_LEFT_PORT);
 pros::Motor backLeft(BACK_LEFT_PORT);
@@ -20,7 +22,8 @@ pros::Motor intake(INTAKE_PORT);
 pros::Motor flywheel(FLY_WHEEL);
 pros::Motor flipper(CAP_FLIPPER);
 pros::Motor indexer(INDEXER_PORT, true);
-pros::ADIUltrasonic ballSonar(BALL_SONAR_PORT_PING, BALL_SONAR_PORT_ECHO);
+pros::ADIUltrasonic indexerSonar(INDEXER_SONAR_PORT_PING, INDEXER_SONAR_PORT_ECHO);
+pros::ADIUltrasonic intakeSonar(INTAKE_SONAR_PORT_PING, INTAKE_SONAR_PORT_ECHO);
 pros::ADIGyro gyro(GYRO_PORT);
 
 bool readyToExitAutoSelector = false;
@@ -54,7 +57,113 @@ void incrementAutoMode()
 	}
 }
 
+bool intakeUpRequested = false; //boolean for state of intake request
+bool intakeOutRequested = false;
+bool prepareShotRequested = false;
+char *parameter2;
+int targetShootingTicks = 0;
+bool shootBallRequested = false;
+void monitorIntake(void *param)
+{
+	while (true)
+	{
+		if (intakeUpRequested == true)
+		{
+			if (!(isBetween(indexerSonar.get_value(), 50, 80)))
+			{
+				intake.move_velocity(200);
+				indexer.move_velocity(200);
+			}
+			else if (!(isBetween(intakeSonar.get_value(), 30, 80)))
+			{
+				intake.move_velocity(200);
+				indexer.move_velocity(0);
+			}
+			else
+			{
+				indexer.move_velocity(0);
+				intake.move_velocity(0);
+				intake.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_BRAKE);
+				indexer.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_BRAKE);
+			}
+		}
+		else if (prepareShotRequested == true)
+		{
+			if (!(isBetween(indexerSonar.get_value(), 50, 80)))
+			{
+				intake.move_velocity(200);
+				indexer.move_velocity(200);
+			}
+			else
+			{
+				intake.move_velocity(0);
+				indexer.move_velocity(0);
+				indexer.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_BRAKE);
+			}
+		}
+		else if (intakeOutRequested == true)
+		{
+			intake.move_velocity(-200);
+			indexer.move_velocity(0);
+			indexer.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_BRAKE);
+		}
+		else if (shootBallRequested == true)
+		{
+			intake.move_relative(targetShootingTicks, 200);
+		}
+		else
+		{
+			intake.move_velocity(0);
+			indexer.move_velocity(0);
+			indexer.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_BRAKE);
+		}
+		pros::delay(5);
+	}
+}
 
+int targetFlywheelSpeed = 0;
+bool maintainFlywheelSpeedRequested = false;
+bool flywheelOnTarget = false;
+char *parameter3;
+void maintainFlywheelSpeed(void *param)
+{
+	float kp = 80;
+	float ki = 0;
+	float kd = 0;
+	int currentSpeed = flywheel.get_actual_velocity();
+	int error = targetFlywheelSpeed - currentSpeed;
+	float finalAdjustment = error * kp; //add the rest of PID to this calculation
+
+	while (true)
+	{
+		if (maintainFlywheelSpeedRequested == true)
+		{
+			currentSpeed = flywheel.get_actual_velocity();
+			error = targetFlywheelSpeed - currentSpeed;
+
+			if (abs(error) < 6)
+			{
+				flywheelOnTarget = true;
+			}
+			else
+			{
+				flywheelOnTarget = false;
+			}
+			finalAdjustment = error * kp; //add the rest of PID to this calculation
+			flywheel.move_voltage(flywheel.get_voltage() + finalAdjustment);
+			std::cout << targetFlywheelSpeed << "\n";
+		}
+		else
+		{
+			flywheel.move_voltage(0);
+			flywheelOnTarget = false;
+		}
+		pros::delay(5);
+	}
+}
+
+pros::Task flywheelRPMMonitor(maintainFlywheelSpeed, parameter3, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Flywheel speed task");
+pros::Task intakeMonitor(monitorIntake, parameter2, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Intake auto movement task");
 
 /**
  * Runs initialization code. This occurs as soon as the program is started.
@@ -83,7 +192,9 @@ void initialize()
  * the VEX Competition Switch, following either autonomous or opcontrol. When
  * the robot is enabled, this task will exit.
  */
-void disabled() {}
+void disabled()
+{
+}
 
 /**
  * Runs after initialize(), and before autonomous when connected to the Field
