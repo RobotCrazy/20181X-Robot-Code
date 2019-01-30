@@ -64,282 +64,6 @@ void gyroscopeFiltering()
  * minSpeed - The minimum value the drive base can go at
  * Note: Set minSpeed to 0 to leave the deadband at its default
  **/
-/*void drive(char dir, float inches, int topSpeed, int minSpeed)
-{
-
-  int ticks = (int)((inches / (pi * WHEEL_RADIUS)) * 180);
-
-  frontRight.tare_position();
-  backRight.tare_position();
-  frontLeft.tare_position();
-  backLeft.tare_position();
-
-  float kp = 20;
-  double ki = .001;
-  ki = 0;
-  float kd = 0;
-
-  int integralZone = 150;
-  float driveSpeedR = 0;
-  float driveSpeedL = 0;
-  float lastErrorL = 0;
-  float lastErrorR = 0;
-  float totalErrorL = 0;
-  float totalErrorR = 0;
-  float lastDriveSpeedL = 0;
-  float lastDriveSpeedR = 0;
-  int startingAngle = gyro.get_value();
-  int angleError = 0;
-
-  float proportionL = 0;
-  float proportionR = 0;
-  double integralL = 0;
-  double integralR = 0;
-  float derivitiveL = 0;
-  float derivitiveR = 0;
-  float angleAdjustment = 0;
-
-  int tolerance = 40;
-  int speedTolerance = 5;
-  int angleDiffTolerance = 20;
-  float increaseFactor = .1;
-  float angleAdjustmentFactor = 0; //Try increasing angleAdjustmentFactor as error gets smaller
-  float speedDeadband = 2000;
-  if (minSpeed != 0)
-  {
-    speedDeadband = minSpeed;
-  }
-
-  if (dir == 'f')
-  {
-
-    int errorR = ticks - frontRight.get_position();
-    int errorL = ticks - frontLeft.get_position();
-
-    while (abs(errorR) > tolerance || abs(errorL) > tolerance ||
-           frontRight.get_actual_velocity() > speedTolerance ||
-           backRight.get_actual_velocity() > speedTolerance ||
-           frontLeft.get_actual_velocity() > speedTolerance ||
-           backLeft.get_actual_velocity() > speedTolerance ||
-           abs(frontRight.get_position() - frontLeft.get_position()) > angleDiffTolerance ||
-           abs(backRight.get_position() - backLeft.get_position()) > angleDiffTolerance
-           /*abs(angleError) > 10*/
-/*)
-    {
-
-      errorR = (ticks - frontRight.get_position());
-      errorL = (ticks - frontLeft.get_position());
-
-      //angleError = gyro.get_value() - startingAngle;
-
-      proportionL = errorL * kp;
-      proportionR = errorR * kp;
-
-      if (errorL == 0)
-      {
-        derivitiveL = 0;
-      }
-      else
-      {
-        derivitiveL = (errorL - lastErrorL) * kd;
-      }
-
-      if (errorR == 0)
-      {
-        derivitiveR = 0;
-      }
-      else
-      {
-        derivitiveR = (errorR - lastErrorR) * kd;
-      }
-
-      integralL = totalErrorL * ki;
-      integralR = totalErrorR * ki;
-
-      if (abs(errorL) < integralZone && errorL != 0)
-      {
-        totalErrorL += errorL;
-      }
-      else
-      {
-        integralL = 0;
-        totalErrorL = 0;
-      }
-
-      if (abs(errorR) < integralZone && errorR != 0)
-      {
-        totalErrorR += errorR;
-      }
-      else
-      {
-        integralR = 0;
-        totalErrorR = 0;
-      }
-
-      driveSpeedR = (proportionR + derivitiveR + integralR);
-      driveSpeedL = (proportionL + derivitiveL + integralL);
-
-      if (isBetween(driveSpeedL, -1 * speedDeadband, 0))
-      {
-        driveSpeedL = (-1 * speedDeadband);
-      }
-      else if (isBetween(driveSpeedL, 0, speedDeadband))
-      {
-        driveSpeedL = speedDeadband;
-      }
-
-      if (isBetween(driveSpeedR, -1 * speedDeadband, 0))
-      {
-        driveSpeedR = (-1 * speedDeadband);
-      }
-      else if (isBetween(driveSpeedR, 0, speedDeadband))
-      {
-        driveSpeedR = speedDeadband;
-      }
-
-      /* if (angleError > 0)
-      {
-        driveSpeedL += (angleError * angleAdjustmentFactor);
-      }
-      else if (angleError < 0)
-      {
-        driveSpeedR += (angleError * angleAdjustmentFactor);
-      }*/
-
-/*if (driveSpeedL > 0 && lastDriveSpeedL >= 0 && driveSpeedL > lastDriveSpeedL)
-      {
-        float currentSpeedL = lastDriveSpeedL + increaseFactor;
-        frontLeft.move_voltage(currentSpeedL);
-        backLeft.move_voltage(currentSpeedL);
-        lastDriveSpeedL = currentSpeedL;
-      }
-      else if (driveSpeedL < 0 && lastDriveSpeedL <= 0 && driveSpeedL < lastDriveSpeedL)
-      {
-        float currentSpeedL = lastDriveSpeedL - increaseFactor;
-        frontLeft.move_voltage(currentSpeedL);
-        backLeft.move_voltage(currentSpeedL);
-        lastDriveSpeedL = currentSpeedL;
-      }
-      else
-      {
-        frontLeft.move_voltage(driveSpeedL);
-        backLeft.move_voltage(driveSpeedL);
-        lastDriveSpeedL = driveSpeedL;
-      }
-
-      if (driveSpeedR > 0 && lastDriveSpeedR >= 0 && driveSpeedR > lastDriveSpeedR)
-      {
-        float currentSpeedR = lastDriveSpeedR + increaseFactor;
-        frontRight.move_voltage(currentSpeedR);
-        backRight.move_voltage(currentSpeedR);
-        lastDriveSpeedR = currentSpeedR;
-      }
-      else if (driveSpeedR < 0 && lastDriveSpeedR <= 0 && driveSpeedR < lastDriveSpeedR)
-      {
-        float currentSpeedR = lastDriveSpeedR - increaseFactor;
-        frontRight.move_voltage(currentSpeedR);
-        backRight.move_voltage(currentSpeedR);
-        lastDriveSpeedR = currentSpeedR;
-      }
-      else
-      {
-        frontRight.move_voltage(driveSpeedR);
-        backRight.move_voltage(driveSpeedR);
-        lastDriveSpeedR = driveSpeedR;
-      }
-
-      lastErrorL = errorL;
-      lastErrorR = errorR;
-    }
-    frontRight.move_voltage(0);
-    backRight.move_voltage(0);
-    frontLeft.move_voltage(0);
-    backLeft.move_voltage(0);
-  }
-
-  else if (dir == 'b')
-  {
-    kp *= -1;
-    int errorR = (ticks - (frontRight.get_position() * -1));
-    int errorL = (ticks - (frontLeft.get_position() * -1));
-    float driveSpeedR = errorR * kp;
-    float driveSpeedL = errorL * kp;
-    while (abs(errorR) > tolerance || abs(errorL) > tolerance || frontRight.get_actual_velocity() > speedTolerance || backRight.get_actual_velocity() > speedTolerance || frontLeft.get_actual_velocity() > speedTolerance || backLeft.get_actual_velocity() > speedTolerance)
-    {
-      {
-
-        errorR = (ticks - (frontRight.get_position() * -1));
-        errorL = (ticks - (frontLeft.get_position() * -1));
-        driveSpeedR = errorR * kp;
-        driveSpeedL = errorL * kp;
-
-        if (isBetween(driveSpeedL, -1 * speedDeadband, 0))
-        {
-          driveSpeedL = (-1 * speedDeadband);
-        }
-        else if (isBetween(driveSpeedL, 0, speedDeadband))
-        {
-          driveSpeedL = speedDeadband;
-        }
-
-        if (isBetween(driveSpeedR, -1 * speedDeadband, 0))
-        {
-          driveSpeedR = (-1 * speedDeadband);
-        }
-        else if (isBetween(driveSpeedR, 0, speedDeadband))
-        {
-          driveSpeedR = speedDeadband;
-        }
-
-        if (driveSpeedL > 0 && driveSpeedL > lastDriveSpeedL)
-        {
-          float currentSpeedL = lastDriveSpeedL + increaseFactor;
-          frontLeft.move_voltage(currentSpeedL);
-          backLeft.move_voltage(currentSpeedL);
-          lastDriveSpeedL = currentSpeedL;
-        }
-        else if (driveSpeedL < 0 && driveSpeedL < lastDriveSpeedL)
-        {
-          float currentSpeedL = lastDriveSpeedL - increaseFactor;
-          frontLeft.move_voltage(currentSpeedL);
-          backLeft.move_voltage(currentSpeedL);
-          lastDriveSpeedL = currentSpeedL;
-        }
-        else
-        {
-          frontLeft.move_voltage(driveSpeedL);
-          backLeft.move_voltage(driveSpeedL);
-          lastDriveSpeedL = driveSpeedL;
-        }
-
-        if (driveSpeedR > 0 && driveSpeedR > lastDriveSpeedR)
-        {
-          float currentSpeedR = lastDriveSpeedR + increaseFactor;
-          frontRight.move_voltage(currentSpeedR);
-          backRight.move_voltage(currentSpeedR);
-          lastDriveSpeedR = currentSpeedR;
-        }
-        else if (driveSpeedR < 0 && driveSpeedR < lastDriveSpeedR)
-        {
-          float currentSpeedR = lastDriveSpeedR - increaseFactor;
-          frontRight.move_voltage(currentSpeedR);
-          backRight.move_voltage(currentSpeedR);
-          lastDriveSpeedR = currentSpeedR;
-        }
-        else
-        {
-          frontRight.move_voltage(driveSpeedR);
-          backRight.move_voltage(driveSpeedR);
-          lastDriveSpeedR = driveSpeedR;
-        }
-      }
-    }
-    frontRight.move_voltage(0);
-    backRight.move_voltage(0);
-    frontLeft.move_voltage(0);
-    backLeft.move_voltage(0);
-  }
-}*/
 
 void drive(char dir, float inches)
 {
@@ -462,6 +186,8 @@ void startIntake()
 {
   intakeUpRequested = true;
   prepareShotRequested = false;
+  shootBallRequested = false;
+  intakeOutRequested = false;
 }
 
 void startIntakeOut()
@@ -476,6 +202,8 @@ void stopIntake()
 {
   intakeUpRequested = false;
   prepareShotRequested = true;
+  shootBallRequested = false;
+  intakeOutRequested = false;
 }
 
 void prepareShot()
@@ -616,7 +344,50 @@ vision::signature SIG_6(6, 0, 0, 0, 0, 0, 0, 3.000, 0);
 vision::signature SIG_7(7, 0, 0, 0, 0, 0, 0, 3.000, 0);
 vex::vision vision1(vex::PORT1, 50, BLUEFLAG, REDFLAG, SIG_3, SIG_4, SIG_5, SIG_6, SIG_7);*/
 
+/*pros::vision_signature_s_t BLUEFLAG = {1, {1, 0, 0}, 2.600, -4321, -2115, -3218, 7633, 13239, 10436, 0, 0};
+pros::vision_signature_s_t REDFLAG = {2, {1, 0, 0}, 3.400, 10269, 14613, 12441, -1509, -231, -870, 0, 0};
+pros::vision_signature_s_t SIG_3 = {3, {1, 0, 0}, 3.000, 0, 0, 0, 0, 0, 0, 0, 0};
+pros::vision_signature_s_t SIG_4 = {4, {1, 0, 0}, 3.000, 0, 0, 0, 0, 0, 0, 0, 0};
+pros::vision_signature_s_t SIG_5 = {5, {1, 0, 0}, 3.000, 0, 0, 0, 0, 0, 0, 0, 0};
+pros::vision_signature_s_t SIG_6 = {6, {1, 0, 0}, 3.000, 0, 0, 0, 0, 0, 0, 0, 0};
+pros::vision_signature_s_t SIG_7 = {7, {1, 0, 0}, 3.000, 0, 0, 0, 0, 0, 0, 0, 0};
+*/
 void testAuto()
+{
+  startIntakeOut();
+  drive('f', 33);
+  startIntake();
+  drive('f', 6);
+  drive('b', 5);
+  stopIntake();
+  startFlywheel(190);
+  drive('b', 34);
+  turnToTarget(-88, 100);
+  drive('f', 60);
+  shootWhenReady(180, 500, false);
+  drive('f', 19);
+  shootWhenReady(180, 800, true);
+  turnToTarget(75, 100);
+  drive('b', 15);
+  drive('f', 35);
+  turnToTarget(0, 100);
+}
+void autoOriginal() //Blue Front Original
+{
+}
+void auto1() //Blue Front
+{
+}
+
+void auto2() //Blue Front Shoot first
+{
+}
+
+void auto3() //Blue Back
+{
+}
+
+void auto4() //Red Front
 {
   startFlywheel(190);
   startIntake();
@@ -637,145 +408,22 @@ void testAuto()
   drive('f', 41);
   turnToTarget(90, 100);
   drive('b', 30);
-
-  //pros::delay(3000);
-  //startFlywheel(190);
-  //startIntake();
-  //pros::delay(5000);
-  //drive('b', 35);
-  //drive('f', 35);
-  /*drive('b', 5);
-  //prepareShot();
-  stopIntake();
-  drive('b', 35);
-  turnToTarget(-90, 100);
-  drive('f', 12);
-  shootWhenReady(170, 500, false);*/
 }
-/*void autoOriginal() //Blue Front Original
+void auto5() //Red Front Shoot First
 {
-  startFlywheel(10000);
-  shootWhenReady(170, 700, true);
-  drive('b', 6, 50, true);
-  turnToTarget(64.5, 100);
-  drive('f', 41, 150, true);
-  runIntake('u', 800, true);
-  startFlywheel(10500);
-  drive('b', 36.5, 150, true);
-  turnToTarget(0, 100);
-  drive('f', 29, 90, true);
-  turnToTarget(0, 75);
-  shootWhenReady(160, 700, true);
-  //turnToTarget(-10, 60);
-  drive('f', 30, 200, true);
-}
-void auto1() //Blue Front
-{
-  startFlywheel(10500);
-  drive('f', 40, 150, 4000);
-  runIntake('u', 800, true);
-  drive('b', 42, 150, 0);
-  turnToTarget(90, 100);
-  shootWhenReady(165, 400, false);
-  drive('f', 30, 50, 0);
-  turnToTarget(86, 100);
-  shootWhenReady(165, 600, true);
-  drive('f', 25, 100, 0);
-}
-
-void auto2()
-{ //Blue Front Shoot first
-  startFlywheel(10000);
-  shootWhenReady(170, 700, true);
-  drive('b', 6, 50, true);
-  turnToTarget(-90, 100);
-  drive('f', 41, 150, true);
-  runIntake('u', 800, true);
-  startFlywheel(10500);
-  drive('b', 36.5, 150, true);
-  turnToTarget(3, 100);
-  drive('f', 29, 90, true);
-  turnToTarget(3, 75);
-  shootWhenReady(160, 700, true);
-  //turnToTarget(-10, 60);
-  drive('f', 30, 200, true);
-}
-
-void auto3() //Blue Back
-{
-  startFlywheel(11200);
-  drive('f', 40, 150, 5000);
-  runIntake('u', 800, true);
-  drive('b', 38, 150, 0);
-  //turnToTarget(-45, 100);
-  turnToTarget(65.5, 100);
-  shootWhenReady(188, 400, false);
-  pros::delay(250);
-  shootWhenReady(170, 600, true);
-  startIntake();
-  turnToTarget(90, 100);
-  drive('f', 20, 100, 0);
-  stopIntake();
-  turnToTarget(180, 100);
-  drive('b', 50, 200, 0);
-}
-
-void auto4() //Red Front
-{
-  startFlywheel(10500);
-  drive('f', 40, 150, 4000);
-  runIntake('u', 800, true);
-  drive('b', 42, 150, 0);
-  turnToTarget(-90, 100);
-  shootWhenReady(165, 400, false);
-  drive('f', 30, 50, 0);
-  turnToTarget(-86, 100);
-  shootWhenReady(165, 600, true);
-  drive('f', 25, 100, 0);
-}
-void auto5()
-{ //Red Front Shoot First
-  startFlywheel(10000);
-  shootWhenReady(170, 700, true);
-  drive('b', 6, 50, true);
-  turnToTarget(90, 100);
-  drive('f', 41, 150, true);
-  runIntake('u', 800, true);
-  startFlywheel(10500);
-  drive('b', 36.5, 150, true);
-  turnToTarget(-3, 100);
-  drive('f', 29, 90, true);
-  turnToTarget(-3, 75);
-  shootWhenReady(160, 700, true);
-  //turnToTarget(-10, 60);
-  drive('f', 30, 200, true);
 }
 void auto6() //Red Back
 {
-  startFlywheel(11200);
-  drive('f', 40, 150, 5000);
-  runIntake('u', 800, true);
-  drive('b', 38, 150, 0);
-  //turnToTarget(-45, 100);
-  turnToTarget(-65.5, 100);
-  shootWhenReady(188, 400, false);
-  pros::delay(250);
-  shootWhenReady(170, 600, true);
-  startIntake();
-  turnToTarget(-90, 100);
-  drive('f', 20, 100, 0);
-  stopIntake();
-  turnToTarget(-180, 100);
-  drive('b', 50, 200, 0);
-}*/
+}
+
 void autonomous()
 {
 
   //pros::Task flywheelRPMMonitor(maintainFlywheelSpeed, parameter3, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Flywheel speed task");
   //pros::Task intakeMonitor(monitorIntake, parameter2, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Intake auto movement task");
 
-  autoMode = 100;
-  /*if (autoMode == 1)
+  autoMode = 4;
+  if (autoMode == 1)
   {
     auto1();
   }
@@ -798,7 +446,7 @@ void autonomous()
   else if (autoMode == 6)
   {
     auto6();
-  }*/
+  }
   testAuto();
   /*flywheelRPMMonitor.suspend();
   intakeMonitor.suspend();*/
