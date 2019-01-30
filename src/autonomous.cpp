@@ -64,7 +64,6 @@ void gyroscopeFiltering()
  * minSpeed - The minimum value the drive base can go at
  * Note: Set minSpeed to 0 to leave the deadband at its default
  **/
-
 void drive(char dir, float inches)
 {
 
