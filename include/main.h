@@ -55,6 +55,7 @@ extern pros::Motor flipper;
 extern pros::ADIGyro gyro;
 extern pros::ADIUltrasonic indexerSonar;
 extern pros::ADIUltrasonic intakeSonar;
+extern pros::Vision visionSensor;
 extern pros::Controller master;
 
 extern int autoMode;

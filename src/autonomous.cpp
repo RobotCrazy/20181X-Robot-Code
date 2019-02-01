@@ -6,6 +6,7 @@
 
 double pi = (atan(1) * 4);
 double wheelCircumference = (WHEEL_RADIUS * 2 * pi);
+double gyroScale = .78;
 int globalTargetAngle = 0;
 
 double degreeToRadian(double degrees)
@@ -50,13 +51,39 @@ void setLeftDrive(int voltage)
   }
 }
 
-void gyroscopeFiltering()
-{
-  while (true)
-  {
+pros::vision_signature_s_t BLUEFLAG = {1, {1, 0, 0}, 2.600, -4321, -2115, -3218, 7633, 13239, 10436, 0, 0};
+pros::vision_signature_s_t REDFLAG = {2, {1, 0, 0}, 3.400, 10269, 14613, 12441, -1509, -231, -870, 0, 0};
 
-    pros::delay(2);
+void alignToFlag()
+{
+  pros::vision_object_s_t flag1 = visionSensor.get_by_sig(0, BLUEFLAG.id);
+  float kp = 15;
+  int visionCenter = VISION_FOV_WIDTH / 2;
+  int speedDeadband = 1500;
+  int error = flag1.x_middle_coord - visionCenter;
+  int speed = error * kp;
+
+  while (abs(error) > 5)
+  {
+    pros::lcd::print(0, "Aligning to flags");
+    int error = flag1.x_middle_coord - visionCenter;
+    int speed = error * kp;
+
+    if (speed > 0 && speed < speedDeadband)
+    {
+      speed = speedDeadband;
+    }
+    else if (speed < 0 && abs(speed) > speedDeadband)
+    {
+      speed = speedDeadband * -1;
+    }
+
+    setRightDrive(speed);
+    setLeftDrive(speed * -1);
   }
+  pros::lcd::clear();
+  setRightDrive(0);
+  setLeftDrive(0);
 }
 
 /**
@@ -287,10 +314,15 @@ void turn(char dir, int degrees, int topSpeed, bool waitForCompletion)
   }
 }
 
+void setGlobalTargetAngle(int newAngle)
+{
+  globalTargetAngle = (newAngle * gyroScale * 10);
+}
+
 void turnToTarget(float targetAngle, int maxSpeed)
 {
   float kp = 20;
-  float scaledAngle = targetAngle * .78;
+  float scaledAngle = targetAngle * gyroScale;
   globalTargetAngle = scaledAngle * 10;
   int error = (scaledAngle * 10.0) - gyro.get_value();
   int driveSpeed = error * kp;
@@ -343,17 +375,10 @@ vision::signature SIG_6(6, 0, 0, 0, 0, 0, 0, 3.000, 0);
 vision::signature SIG_7(7, 0, 0, 0, 0, 0, 0, 3.000, 0);
 vex::vision vision1(vex::PORT1, 50, BLUEFLAG, REDFLAG, SIG_3, SIG_4, SIG_5, SIG_6, SIG_7);*/
 
-/*pros::vision_signature_s_t BLUEFLAG = {1, {1, 0, 0}, 2.600, -4321, -2115, -3218, 7633, 13239, 10436, 0, 0};
-pros::vision_signature_s_t REDFLAG = {2, {1, 0, 0}, 3.400, 10269, 14613, 12441, -1509, -231, -870, 0, 0};
-pros::vision_signature_s_t SIG_3 = {3, {1, 0, 0}, 3.000, 0, 0, 0, 0, 0, 0, 0, 0};
-pros::vision_signature_s_t SIG_4 = {4, {1, 0, 0}, 3.000, 0, 0, 0, 0, 0, 0, 0, 0};
-pros::vision_signature_s_t SIG_5 = {5, {1, 0, 0}, 3.000, 0, 0, 0, 0, 0, 0, 0, 0};
-pros::vision_signature_s_t SIG_6 = {6, {1, 0, 0}, 3.000, 0, 0, 0, 0, 0, 0, 0, 0};
-pros::vision_signature_s_t SIG_7 = {7, {1, 0, 0}, 3.000, 0, 0, 0, 0, 0, 0, 0, 0};
-*/
 void testAuto()
 {
-  startIntakeOut();
+  alignToFlag();
+  /*startIntakeOut();
   drive('f', 33);
   startIntake();
   drive('f', 6);
@@ -362,14 +387,14 @@ void testAuto()
   startFlywheel(190);
   drive('b', 34);
   turnToTarget(-88, 100);
-  drive('f', 60);
+  drive('f', 58.5);
   shootWhenReady(180, 500, false);
   drive('f', 19);
   shootWhenReady(180, 800, true);
-  turnToTarget(75, 100);
+  turnToTarget(85, 100);
   drive('b', 15);
-  drive('f', 35);
-  turnToTarget(0, 100);
+  drive('f', 40);
+  turnToTarget(0, 100);*/
 }
 void autoOriginal() //Blue Front Original
 {
@@ -386,14 +411,14 @@ void auto3() //Blue Back
 {
 }
 
-void auto4() //Red Front
+/*void auto4() //Red Front
 {
   startFlywheel(190);
   startIntake();
   drive('f', 35);
   drive('b', 5);
   stopIntake();
-  drive('b', 32);
+  drive('b', 31);
   turnToTarget(-88, 100);
   drive('f', 10);
   shootWhenReady(180, 1000, false);
@@ -407,6 +432,30 @@ void auto4() //Red Front
   drive('f', 41);
   turnToTarget(90, 100);
   drive('b', 30);
+}*/
+
+void auto4() //Red Front
+{
+  startFlywheel(190);
+  startIntake();
+  drive('f', 35);
+  drive('b', 5);
+  stopIntake();
+  drive('b', 31);
+  turnToTarget(-88, 100);
+  drive('f', 10);
+  shootWhenReady(180, 1000, false);
+  drive('f', 19);
+  shootWhenReady(180, 1000, true);
+  setGlobalTargetAngle(-98);
+  drive('f', 18.5);
+  drive('b', 27);
+  startIntakeOut();
+  turnToTarget(0, 100);
+  drive('f', 25);
+  stopIntake();
+  turnToTarget(-47, 100);
+  drive('f', 30);
 }
 void auto5() //Red Front Shoot First
 {
@@ -421,7 +470,7 @@ void autonomous()
   //pros::Task flywheelRPMMonitor(maintainFlywheelSpeed, parameter3, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Flywheel speed task");
   //pros::Task intakeMonitor(monitorIntake, parameter2, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Intake auto movement task");
 
-  autoMode = 4;
+  autoMode = 0;
   if (autoMode == 1)
   {
     auto1();

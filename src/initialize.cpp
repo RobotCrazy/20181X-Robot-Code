@@ -8,6 +8,7 @@
 #define FLY_WHEEL 14
 #define CAP_FLIPPER 9
 #define INDEXER_PORT 19
+#define VISION_SENSOR_PORT 8
 #define INDEXER_SONAR_PORT_PING 'A'
 #define INDEXER_SONAR_PORT_ECHO 'B'
 #define INTAKE_SONAR_PORT_PING 'C'
@@ -25,6 +26,7 @@ pros::Motor indexer(INDEXER_PORT, true);
 pros::ADIUltrasonic indexerSonar(INDEXER_SONAR_PORT_PING, INDEXER_SONAR_PORT_ECHO);
 pros::ADIUltrasonic intakeSonar(INTAKE_SONAR_PORT_PING, INTAKE_SONAR_PORT_ECHO);
 pros::ADIGyro gyro(GYRO_PORT);
+pros::Vision visionSensor(VISION_SENSOR_PORT);
 
 bool readyToExitAutoSelector = false;
 void autonSelector();
@@ -185,6 +187,7 @@ void initialize()
 	pros::Controller master(CONTROLLER_MASTER);
 
 	flipper.tare_position();
+	visionSensor.clear_led();
 }
 
 /**
