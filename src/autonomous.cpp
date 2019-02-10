@@ -51,21 +51,119 @@ void setLeftDrive(int voltage)
   }
 }
 
-pros::vision_signature_s_t BLUEFLAG = {1, {1, 0, 0}, 2.600, -4321, -2115, -3218, 7633, 13239, 10436, 0, 0};
+/*pros::vision_signature_s_t REDFLAG;
+pros::vision_signature_s_t BLUEFLAG;
+REDFLAG.id = 1;
+REDFLAG.range = 3;
+REDFLAG.u_min = 4681;
+REDFLAG.u_max = 7621;
+REDFLAG.u_mean = 6151;
+REDFLAG.v_min = -1117;
+REDFLAG.v_max = -429;
+REDFLAG.v_mean = -773;
+REDFLAG.rgb = 7160124;
+REDFLAG.type = 0;
+visionSensor.set_signature(1, &REDFLAG);
+
+BLUEFLAG.id = 2;
+BLUEFLAG.range = 3;
+BLUEFLAG.u_min = -3085;
+BLUEFLAG.u_max = 1707;
+BLUEFLAG.u_mean = -2396;
+BLUEFLAG.v_min = 7691;
+BLUEFLAG.v_max = 11253;
+BLUEFLAG.v_mean = 9472;
+BLUEFLAG.rgb = 1120307;
+BLUEFLAG.type = 0;
+visionSensor.set_signature(2, &BLUEFLAG);
+
+/*pros::vision_signature_s_t BLUEFLAG = {1, {1, 0, 0}, 2.600, -4321, -2115, -3218, 7633, 13239, 10436, 0, 0};
 pros::vision_signature_s_t REDFLAG = {2, {1, 0, 0}, 3.400, 10269, 14613, 12441, -1509, -231, -870, 0, 0};
+*/
+
+/**
+ * A function that travels a given number of inches and shoots twice during the movement
+ * dir - 'f' for forwards; 'b' - for backwards
+ * inches - total distance to travel in inches
+ * distance1 - Distance from starting point to first shot
+ * distance2 - Distance from starting point to second shot
+ **/
+void driveShootAsync(char dir, float inches, int distance1, int distance2)
+{
+  frontRight.tare_position();
+  backRight.tare_position();
+  frontLeft.tare_position();
+  backLeft.tare_position();
+
+  int ticks = (int)((inches / (pi * WHEEL_RADIUS)) * 180);
+  int angleCorrectionFactor = 60;
+  int startingAngle = globalTargetAngle;
+  int traveledDistance = 0;
+
+  //P Variables Here//
+  int error = ticks - ((frontRight.get_position() + backRight.get_position() + frontLeft.get_position() + backLeft.get_position()) / 4);
+  int driveSpeed = 5000;
+  int angleError = 0;
+
+  //Constants here//
+  float kp = 20;
+  float increaseFactor = .1;
+
+  //Tolerance Variables Here//
+  int speedTolerance = 10;
+  int positionTolerance = 30;
+
+  //Deadbands//
+  int speedDeadband = 2500;
+
+  if (dir == 'b')
+  {
+    ticks *= -1;
+  }
+
+  while (abs(error) > positionTolerance ||
+         abs(frontRight.get_actual_velocity()) > speedTolerance ||
+         abs(backRight.get_actual_velocity()) > speedTolerance ||
+         abs(frontLeft.get_actual_velocity()) > speedTolerance ||
+         abs(backLeft.get_actual_velocity()) > speedTolerance)
+  {
+    angleError = startingAngle - gyro.get_value();
+    traveledDistance = ((frontRight.get_position() + backRight.get_position() + frontLeft.get_position() + backLeft.get_position()) / 4);
+
+    error = ticks - traveledDistance;
+
+    setLeftDrive(driveSpeed + angleError * angleCorrectionFactor);
+    setRightDrive(driveSpeed - angleError * angleCorrectionFactor);
+    if (isBetween(traveledDistance, distance1 - 100, distance2 + 100) || isBetween(traveledDistance, distance2 - 100, distance2 + 100))
+    {
+      intakeMonitor.suspend();
+      indexer.move_voltage(12000);
+    }
+    else
+    {
+      indexer.move_voltage(0);
+      intakeMonitor.resume();
+    }
+    pros::delay(5);
+  }
+  setRightDrive(0);
+  setLeftDrive(0);
+}
 
 void alignToFlag()
 {
-  pros::vision_object_s_t flag1 = visionSensor.get_by_sig(0, BLUEFLAG.id);
+  pros::vision_object_s_t flag1 = visionSensor.get_by_sig(0, 1);
   float kp = 15;
   int visionCenter = VISION_FOV_WIDTH / 2;
   int speedDeadband = 1500;
   int error = flag1.x_middle_coord - visionCenter;
   int speed = error * kp;
-
-  while (abs(error) > 5)
+  pros::lcd::clear();
+  while (true)
   {
-    pros::lcd::print(0, "Aligning to flags");
+    flag1 = visionSensor.get_by_sig(0, 1);
+    pros::lcd::print(2, "%d", flag1.signature);
+    std::cout << flag1.signature << "\n";
     int error = flag1.x_middle_coord - visionCenter;
     int speed = error * kp;
 
@@ -78,8 +176,8 @@ void alignToFlag()
       speed = speedDeadband * -1;
     }
 
-    setRightDrive(speed);
-    setLeftDrive(speed * -1);
+    /*setRightDrive(speed);
+    setLeftDrive(speed * -1);*/
   }
   pros::lcd::clear();
   setRightDrive(0);
@@ -232,6 +330,11 @@ void stopIntake()
   intakeOutRequested = false;
 }
 
+void setFlywheelTargetSpeed(int speed)
+{
+  targetFlywheelSpeed = speed;
+}
+
 void prepareShot()
 {
   while (!(isBetween(indexerSonar.get_value(), 50, 80)))
@@ -260,12 +363,39 @@ void runIntake(char dir, int ticks, bool waitForCompletion)
   }
 }
 
+/**
+ * This function shoots the ball by spinning the indexer once the flywheel speed monitor has 
+ * determined that the speed is correct.
+ * requiredSpeed - The required speed at which the flywheel must shoot
+ * intakeTicks - The number of ticks that the indexer must rotate to shoot the ball
+ * stopFlywheelOnFinish - A boolean representing whether to shut off the flywheel after
+ * shooting
+ *    Pass true to shut off flywheel after shooting
+ *    Pass false to allow the flywheel to continue running
+ **/
 void shootWhenReady(int requiredSpeed, int intakeTicks, bool stopFlywheelOnFinish)
 {
   while (flywheel.get_actual_velocity() < requiredSpeed)
   {
     pros::delay(2);
   }
+  intakeMonitor.suspend();
+  indexer.move_relative(intakeTicks, 200);
+  pros::delay(500);
+  intakeMonitor.resume();
+  if (stopFlywheelOnFinish)
+  {
+    stopFlywheel();
+  }
+}
+
+void shootWhenReady(int intakeTicks, bool stopFlywheelOnFinish)
+{
+  while (flywheelOnTarget == false)
+  {
+    pros::delay(2);
+  }
+  pros::lcd::print(4, "Speed: %d", flywheel.get_actual_velocity());
   intakeMonitor.suspend();
   indexer.move_relative(intakeTicks, 200);
   pros::delay(500);
@@ -377,7 +507,13 @@ vex::vision vision1(vex::PORT1, 50, BLUEFLAG, REDFLAG, SIG_3, SIG_4, SIG_5, SIG_
 
 void testAuto()
 {
-  alignToFlag();
+  startIntake();
+  startFlywheel(180);
+  pros::delay(30000);
+  shootWhenReady(180, 500, false);
+  shootWhenReady(180, 1000, true);
+
+  //Programming Skills Routine Follows://
   /*startIntakeOut();
   drive('f', 33);
   startIntake();
@@ -462,6 +598,16 @@ void auto5() //Red Front Shoot First
 }
 void auto6() //Red Back
 {
+  startFlywheel(195);
+  startIntake();
+  drive('f', 35);
+  drive('b', 5);
+  stopIntake();
+  drive('b', 16);
+  turnToTarget(-71, 100);
+  shootWhenReady(600, false);
+  setFlywheelTargetSpeed(170);
+  shootWhenReady(500, true);
 }
 
 void autonomous()
@@ -470,7 +616,7 @@ void autonomous()
   //pros::Task flywheelRPMMonitor(maintainFlywheelSpeed, parameter3, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Flywheel speed task");
   //pros::Task intakeMonitor(monitorIntake, parameter2, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Intake auto movement task");
 
-  autoMode = 0;
+  autoMode = 6;
   if (autoMode == 1)
   {
     auto1();

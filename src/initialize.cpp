@@ -8,7 +8,7 @@
 #define FLY_WHEEL 14
 #define CAP_FLIPPER 9
 #define INDEXER_PORT 19
-#define VISION_SENSOR_PORT 8
+#define VISION_SENSOR_PORT 13
 #define INDEXER_SONAR_PORT_PING 'A'
 #define INDEXER_SONAR_PORT_ECHO 'B'
 #define INTAKE_SONAR_PORT_PING 'C'
@@ -127,13 +127,20 @@ int targetFlywheelSpeed = 0;
 bool maintainFlywheelSpeedRequested = false;
 bool flywheelOnTarget = false;
 char *parameter3;
+float currentFlywheelVoltage = 0;
 void maintainFlywheelSpeed(void *param)
 {
-	float kp = 80;
+
+	//Constants//
+	float kp = .2;
 	float ki = 0;
-	float kd = 0;
+	float kd = 80;
+
+	//P Variables Here//
 	int currentSpeed = flywheel.get_actual_velocity();
 	int error = targetFlywheelSpeed - currentSpeed;
+	int lastError = 0;
+	int onTargetCount = 0;
 	float finalAdjustment = error * kp; //add the rest of PID to this calculation
 
 	while (true)
@@ -143,24 +150,54 @@ void maintainFlywheelSpeed(void *param)
 			currentSpeed = flywheel.get_actual_velocity();
 			error = targetFlywheelSpeed - currentSpeed;
 
-			if (abs(error) < 6)
+			/*std::cout << "" << currentSpeed << "\n";
+			std::cout << "" << error << "\n";*/
+
+			if (error == 0)
 			{
-				flywheelOnTarget = true;
+				lastError = 0;
+			}
+			finalAdjustment = error * kp + ((error - lastError) * kd); //add the rest of PID to this calculation
+			//std::cout << "" << finalAdjustment << "\n";
+			currentFlywheelVoltage = currentFlywheelVoltage + finalAdjustment;
+			if (currentFlywheelVoltage > 12000)
+			{
+				currentFlywheelVoltage = 12000;
+			}
+			flywheel.move_voltage(currentFlywheelVoltage);
+
+			std::cout << "Current" << currentFlywheelVoltage << "\n";
+			std::cout << "Actual" << flywheel.get_actual_velocity() << "\n";
+			if (abs(error) < 4)
+			{
+				onTargetCount++;
 			}
 			else
 			{
+				onTargetCount = 0;
 				flywheelOnTarget = false;
 			}
-			finalAdjustment = error * kp; //add the rest of PID to this calculation
-			flywheel.move_voltage(flywheel.get_voltage() + finalAdjustment);
-			std::cout << targetFlywheelSpeed << "\n";
+			if (onTargetCount >= 250)
+			{
+				flywheelOnTarget = true;
+			}
+			if (flywheelOnTarget == true)
+			{
+				std::cout << "True\n";
+			}
+			else
+			{
+				std::cout << "False\n";
+			}
+
+			lastError = error;
 		}
 		else
 		{
 			flywheel.move_voltage(0);
 			flywheelOnTarget = false;
 		}
-		pros::delay(5);
+		pros::delay(2);
 	}
 }
 
