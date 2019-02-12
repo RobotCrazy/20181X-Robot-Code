@@ -38,6 +38,8 @@
  * You should add more #includes here
  */
 #include "api.h"
+#include <iostream>
+#include <fstream>
 //#include "okapi/api.hpp"
 //#include "pros/api_legacy.h"
 #include "pros/rtos.hpp"
@@ -70,6 +72,7 @@ extern char *parameter2;
 extern int targetShootingTicks;
 extern bool shootBallRequested;
 extern int globalTargetAngle;
+
 //extern bool maintainFlywheelSpeedRequested;
 
 //Function Externs here/////

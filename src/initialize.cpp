@@ -122,7 +122,7 @@ void monitorIntake(void *param)
 		pros::delay(5);
 	}
 }
-
+/*
 int targetFlywheelSpeed = 0;
 bool maintainFlywheelSpeedRequested = false;
 bool flywheelOnTarget = false;
@@ -132,14 +132,17 @@ void maintainFlywheelSpeed(void *param)
 {
 
 	//Constants//
-	float kp = .2;
-	float ki = 0;
-	float kd = 80;
+	float kp = .15;
+	float ki = .0;
+	float kd = 2;
 
-	//P Variables Here//
-	int currentSpeed = flywheel.get_actual_velocity();
-	int error = targetFlywheelSpeed - currentSpeed;
+	//PID Variables Here//
+	int currentVelocity = flywheel.get_actual_velocity();
+	int error = targetFlywheelSpeed - currentVelocity;
 	int lastError = 0;
+	int totalError = 0;
+	int integralActiveZone = 0;
+
 	int onTargetCount = 0;
 	float finalAdjustment = error * kp; //add the rest of PID to this calculation
 
@@ -147,28 +150,35 @@ void maintainFlywheelSpeed(void *param)
 	{
 		if (maintainFlywheelSpeedRequested == true)
 		{
-			currentSpeed = flywheel.get_actual_velocity();
-			error = targetFlywheelSpeed - currentSpeed;
+			/*currentVelocity = flywheel.get_actual_velocity();
 
-			/*std::cout << "" << currentSpeed << "\n";
-			std::cout << "" << error << "\n";*/
+			error = targetFlywheelSpeed - currentVelocity;
 
 			if (error == 0)
 			{
 				lastError = 0;
 			}
-			finalAdjustment = error * kp + ((error - lastError) * kd); //add the rest of PID to this calculation
-			//std::cout << "" << finalAdjustment << "\n";
+
+			if (abs(error) < integralActiveZone && error != 0)
+			{
+				totalError += error;
+			}
+			else
+			{
+				totalError = 0;
+			}
+
+			finalAdjustment = ((error * kp) + (totalError * ki) + ((error - lastError) * kd)); //add the rest of PID to this calculation
 			currentFlywheelVoltage = currentFlywheelVoltage + finalAdjustment;
 			if (currentFlywheelVoltage > 12000)
 			{
 				currentFlywheelVoltage = 12000;
 			}
-			flywheel.move_voltage(currentFlywheelVoltage);
 
-			std::cout << "Current" << currentFlywheelVoltage << "\n";
-			std::cout << "Actual" << flywheel.get_actual_velocity() << "\n";
-			if (abs(error) < 4)
+			flywheel.move_voltage(currentFlywheelVoltage);
+*/
+//flywheel.move_voltage(targetFlywheelSpeed);
+/*if (abs(error) < 7)
 			{
 				onTargetCount++;
 			}
@@ -181,16 +191,9 @@ void maintainFlywheelSpeed(void *param)
 			{
 				flywheelOnTarget = true;
 			}
-			if (flywheelOnTarget == true)
-			{
-				std::cout << "True\n";
-			}
-			else
-			{
-				std::cout << "False\n";
-			}
 
-			lastError = error;
+			std::cout << currentVelocity << "\n";
+			//lastError = error;
 		}
 		else
 		{
@@ -198,6 +201,46 @@ void maintainFlywheelSpeed(void *param)
 			flywheelOnTarget = false;
 		}
 		pros::delay(2);
+	}
+}*/
+int targetFlywheelSpeed = 0;
+bool maintainFlywheelSpeedRequested = false;
+bool flywheelOnTarget = false;
+char *parameter3;
+void maintainFlywheelSpeed(void *param)
+{
+	float kp = 80;
+	float ki = 0;
+	float kd = 0;
+	int currentSpeed = flywheel.get_actual_velocity();
+	int error = targetFlywheelSpeed - currentSpeed;
+	float finalAdjustment = error * kp; //add the rest of PID to this calculation
+
+	while (true)
+	{
+		if (maintainFlywheelSpeedRequested == true)
+		{
+			currentSpeed = flywheel.get_actual_velocity();
+			error = targetFlywheelSpeed - currentSpeed;
+
+			if (abs(error) < 6)
+			{
+				flywheelOnTarget = true;
+			}
+			else
+			{
+				flywheelOnTarget = false;
+			}
+			finalAdjustment = error * kp; //add the rest of PID to this calculation
+			flywheel.move_voltage(flywheel.get_voltage() + finalAdjustment);
+			std::cout << targetFlywheelSpeed << "\n";
+		}
+		else
+		{
+			flywheel.move_voltage(0);
+			flywheelOnTarget = false;
+		}
+		pros::delay(5);
 	}
 }
 

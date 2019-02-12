@@ -294,10 +294,20 @@ void driveTime(char dir, int milliseconds, int topSpeed)
   backLeft.move_voltage(0);
 }
 
+void setFlywheelVoltage(int voltage)
+{
+  flywheel.move_voltage(voltage);
+}
 void startFlywheel(int targetSpeed)
 {
   maintainFlywheelSpeedRequested = true;
   targetFlywheelSpeed = targetSpeed;
+}
+void startFlywheel(int voltage, int targetSpeed)
+{
+  maintainFlywheelSpeedRequested = true;
+  targetFlywheelSpeed = targetSpeed;
+  flywheel.move_voltage(voltage);
 }
 
 void stopFlywheel()
@@ -364,8 +374,8 @@ void runIntake(char dir, int ticks, bool waitForCompletion)
 }
 
 /**
- * This function shoots the ball by spinning the indexer once the flywheel speed monitor has 
- * determined that the speed is correct.
+ * This function shoots the ball by spinning the indexer once the flywheel velocity
+ * is greater than or equal to the desired speed
  * requiredSpeed - The required speed at which the flywheel must shoot
  * intakeTicks - The number of ticks that the indexer must rotate to shoot the ball
  * stopFlywheelOnFinish - A boolean representing whether to shut off the flywheel after
@@ -389,6 +399,15 @@ void shootWhenReady(int requiredSpeed, int intakeTicks, bool stopFlywheelOnFinis
   }
 }
 
+/**
+ * This function shoots the ball by spinning the indexer once the flywheel speed monitor has 
+ * determined that the speed is correct.
+ * intakeTicks - The number of ticks that the indexer must rotate to shoot the ball
+ * stopFlywheelOnFinish - A boolean representing whether to shut off the flywheel after
+ * shooting
+ *    Pass true to shut off flywheel after shooting
+ *    Pass false to allow the flywheel to continue running
+ **/
 void shootWhenReady(int intakeTicks, bool stopFlywheelOnFinish)
 {
   while (flywheelOnTarget == false)
@@ -507,14 +526,12 @@ vex::vision vision1(vex::PORT1, 50, BLUEFLAG, REDFLAG, SIG_3, SIG_4, SIG_5, SIG_
 
 void testAuto()
 {
-  startIntake();
-  startFlywheel(180);
-  pros::delay(30000);
-  shootWhenReady(180, 500, false);
-  shootWhenReady(180, 1000, true);
-
+  //startIntake();
+  /*startFlywheel(120);
+  pros::delay(12000);
+  shootWhenReady(120, 600, false);*/
   //Programming Skills Routine Follows://
-  /*startIntakeOut();
+  startIntakeOut();
   drive('f', 33);
   startIntake();
   drive('f', 6);
@@ -523,14 +540,15 @@ void testAuto()
   startFlywheel(190);
   drive('b', 34);
   turnToTarget(-88, 100);
-  drive('f', 58.5);
+  drive('f', 56.5);
   shootWhenReady(180, 500, false);
   drive('f', 19);
   shootWhenReady(180, 800, true);
-  turnToTarget(85, 100);
-  drive('b', 15);
-  drive('f', 40);
-  turnToTarget(0, 100);*/
+  setGlobalTargetAngle(-98);
+  drive('f', 18.5);
+  setGlobalTargetAngle(-90);
+  drive('b', 40);
+  turnToTarget(0, 100);
 }
 void autoOriginal() //Blue Front Original
 {
@@ -598,16 +616,21 @@ void auto5() //Red Front Shoot First
 }
 void auto6() //Red Back
 {
-  startFlywheel(195);
+  startFlywheel(11200, 190);
   startIntake();
   drive('f', 35);
   drive('b', 5);
   stopIntake();
   drive('b', 16);
   turnToTarget(-71, 100);
-  shootWhenReady(600, false);
+  shootWhenReady(190, 600, false);
+  pros::delay(700);
+  setFlywheelVoltage(9000);
   setFlywheelTargetSpeed(170);
-  shootWhenReady(500, true);
+  shootWhenReady(170, 500, true);
+  turnToTarget(40, 100);
+  startIntakeOut();
+  drive('f', 35);
 }
 
 void autonomous()
@@ -616,7 +639,7 @@ void autonomous()
   //pros::Task flywheelRPMMonitor(maintainFlywheelSpeed, parameter3, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Flywheel speed task");
   //pros::Task intakeMonitor(monitorIntake, parameter2, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Intake auto movement task");
 
-  autoMode = 6;
+  autoMode = 0;
   if (autoMode == 1)
   {
     auto1();
