@@ -122,7 +122,7 @@ void monitorIntake(void *param)
 		pros::delay(5);
 	}
 }
-/*
+
 int targetFlywheelSpeed = 0;
 bool maintainFlywheelSpeedRequested = false;
 bool flywheelOnTarget = false;
@@ -133,7 +133,7 @@ void maintainFlywheelSpeed(void *param)
 
 	//Constants//
 	float kp = .15;
-	float ki = .0;
+	float ki = 0;
 	float kd = 2;
 
 	//PID Variables Here//
@@ -150,7 +150,7 @@ void maintainFlywheelSpeed(void *param)
 	{
 		if (maintainFlywheelSpeedRequested == true)
 		{
-			/*currentVelocity = flywheel.get_actual_velocity();
+			currentVelocity = flywheel.get_actual_velocity();
 
 			error = targetFlywheelSpeed - currentVelocity;
 
@@ -176,9 +176,9 @@ void maintainFlywheelSpeed(void *param)
 			}
 
 			flywheel.move_voltage(currentFlywheelVoltage);
-*/
-//flywheel.move_voltage(targetFlywheelSpeed);
-/*if (abs(error) < 7)
+
+			//flywheel.move_voltage(targetFlywheelSpeed);
+			if (abs(error) < 7)
 			{
 				onTargetCount++;
 			}
@@ -202,7 +202,8 @@ void maintainFlywheelSpeed(void *param)
 		}
 		pros::delay(2);
 	}
-}*/
+}
+/*
 int targetFlywheelSpeed = 0;
 bool maintainFlywheelSpeedRequested = false;
 bool flywheelOnTarget = false;
@@ -242,7 +243,7 @@ void maintainFlywheelSpeed(void *param)
 		}
 		pros::delay(5);
 	}
-}
+}*/
 
 pros::Task flywheelRPMMonitor(maintainFlywheelSpeed, parameter3, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Flywheel speed task");
 pros::Task intakeMonitor(monitorIntake, parameter2, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Intake auto movement task");

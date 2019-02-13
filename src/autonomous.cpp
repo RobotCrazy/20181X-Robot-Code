@@ -198,7 +198,7 @@ void drive(char dir, float inches)
   backLeft.tare_position();
 
   int ticks = (int)((inches / (pi * WHEEL_RADIUS)) * 180);
-  int angleCorrectionFactor = 60;
+  int angleCorrectionFactor = 40;
   int startingAngle = globalTargetAngle;
 
   //P Variables Here//
@@ -297,6 +297,11 @@ void driveTime(char dir, int milliseconds, int topSpeed)
 void setFlywheelVoltage(int voltage)
 {
   flywheel.move_voltage(voltage);
+}
+void startFlywheelVoltage(int voltage)
+{
+  maintainFlywheelSpeedRequested = false;
+  setFlywheelVoltage(voltage);
 }
 void startFlywheel(int targetSpeed)
 {
@@ -542,10 +547,10 @@ void testAuto()
   turnToTarget(-88, 100);
   drive('f', 56.5);
   shootWhenReady(180, 500, false);
-  drive('f', 19);
+  drive('f', 20.5);
   shootWhenReady(180, 800, true);
   setGlobalTargetAngle(-98);
-  drive('f', 18.5);
+  drive('f', 22);
   setGlobalTargetAngle(-90);
   drive('b', 40);
   turnToTarget(0, 100);
