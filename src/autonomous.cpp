@@ -271,6 +271,96 @@ void drive(char dir, float inches)
   setLeftDrive(0);
 }
 
+void driveRampUp(char dir, float inches)
+{
+
+  frontRight.tare_position();
+  backRight.tare_position();
+  frontLeft.tare_position();
+  backLeft.tare_position();
+
+  int ticks = (int)((inches / (pi * WHEEL_RADIUS)) * 180);
+  int maxAngleCorrectionFactor = 100;
+  int angleCorrectionFactor = 40;
+  float angleCorrectionFactorD = 2;
+  int startingAngle = globalTargetAngle;
+
+  float percentOfFullSpeed = 0;
+
+  //P Variables Here//
+  int error = ticks - ((frontRight.get_position() + backRight.get_position() + frontLeft.get_position() + backLeft.get_position()) / 4);
+  float driveSpeed = 0;
+  float lastDriveSpeed = 0;
+  int angleError = 0;
+  int lastAngleError = 0;
+
+  //Constants here//
+  float kp = 20;
+  float increaseFactor = .4;
+
+  //Tolerance Variables Here//
+  int speedTolerance = 10;
+  int positionTolerance = 30;
+
+  //Deadbands//
+  int speedDeadband = 2500;
+
+  if (dir == 'b')
+  {
+    ticks *= -1;
+  }
+
+  while (abs(error) > positionTolerance ||
+         abs(frontRight.get_actual_velocity()) > speedTolerance ||
+         abs(backRight.get_actual_velocity()) > speedTolerance ||
+         abs(frontLeft.get_actual_velocity()) > speedTolerance ||
+         abs(backLeft.get_actual_velocity()) > speedTolerance)
+  {
+    angleError = startingAngle - gyro.get_value();
+
+    error = ticks - ((frontRight.get_position() + backRight.get_position() + frontLeft.get_position() + backLeft.get_position()) / 4);
+
+    driveSpeed = error * kp;
+
+    if (isBetween(driveSpeed, -1 * speedDeadband, 0))
+    {
+      driveSpeed = -1 * speedDeadband;
+    }
+    if (isBetween(driveSpeed, 0, speedDeadband))
+    {
+      driveSpeed = speedDeadband;
+    }
+
+    if (driveSpeed > 0 && lastDriveSpeed >= 0 && driveSpeed > lastDriveSpeed)
+    {
+      std::cout << "First if\n";
+      setLeftDrive(lastDriveSpeed + increaseFactor + ((angleError * angleCorrectionFactor) + ((angleError - lastAngleError) * angleCorrectionFactorD)));
+      setRightDrive(lastDriveSpeed + increaseFactor - ((angleError * angleCorrectionFactor) + ((angleError - lastAngleError) * angleCorrectionFactorD)));
+      lastDriveSpeed += increaseFactor;
+    }
+    else if (driveSpeed < 0 && lastDriveSpeed <= 0 && driveSpeed < lastDriveSpeed)
+    {
+      std::cout << "Second if\n";
+      setLeftDrive(lastDriveSpeed - increaseFactor + ((angleError * angleCorrectionFactor) + ((angleError - lastAngleError) * angleCorrectionFactorD)));
+      setRightDrive(lastDriveSpeed - increaseFactor - ((angleError * angleCorrectionFactor) + ((angleError - lastAngleError) * angleCorrectionFactorD)));
+      lastDriveSpeed -= increaseFactor;
+    }
+    else
+    {
+      setLeftDrive(driveSpeed + ((angleError * angleCorrectionFactor) + ((angleError - lastAngleError) * angleCorrectionFactorD)));
+      setRightDrive(driveSpeed - ((angleError * angleCorrectionFactor) + ((angleError - lastAngleError) * angleCorrectionFactorD)));
+      lastDriveSpeed = driveSpeed;
+    }
+
+    //percentOfFullSpeed = driveSpeed / 12000.0;
+    //angleCorrectionFactor = maxAngleCorrectionFactor * (1.0 - percentOfFullSpeed);
+    //This is an alternate solution.  Try this if the D term does not work, or try it with the D term.
+    lastAngleError = angleError;
+  }
+  setRightDrive(0);
+  setLeftDrive(0);
+}
+
 void driveTime(char dir, int milliseconds, int topSpeed)
 {
   int currentTime = pros::millis();
@@ -540,19 +630,19 @@ void testAuto()
   drive('f', 33);
   startIntake();
   drive('f', 6);
-  drive('b', 5);
+  driveRampUp('b', 5);
   stopIntake();
   startFlywheel(190);
-  drive('b', 34);
-  turnToTarget(-88, 100);
-  drive('f', 56.5);
+  driveRampUp('b', 34);
+  turnToTarget(-89, 100);
+  driveRampUp('f', 56.5);
   shootWhenReady(180, 500, false);
-  drive('f', 20.5);
+  driveRampUp('f', 20.5);
   shootWhenReady(180, 800, true);
   setGlobalTargetAngle(-98);
-  drive('f', 22);
+  driveRampUp('f', 18);
   setGlobalTargetAngle(-90);
-  drive('b', 40);
+  driveRampUp('b', 48);
   turnToTarget(0, 100);
 }
 void autoOriginal() //Blue Front Original
@@ -560,6 +650,26 @@ void autoOriginal() //Blue Front Original
 }
 void auto1() //Blue Front
 {
+  startFlywheel(190);
+  startIntake();
+  drive('f', 35);
+  drive('b', 5);
+  stopIntake();
+  drive('b', 31);
+  turnToTarget(88, 100);
+  drive('f', 10);
+  shootWhenReady(180, 1000, false);
+  drive('f', 19);
+  shootWhenReady(180, 1000, true);
+  setGlobalTargetAngle(98);
+  drive('f', 18.5);
+  drive('b', 27);
+  startIntakeOut();
+  turnToTarget(0, 100);
+  drive('f', 25);
+  stopIntake();
+  turnToTarget(47, 100);
+  drive('f', 30);
 }
 
 void auto2() //Blue Front Shoot first
@@ -644,7 +754,7 @@ void autonomous()
   //pros::Task flywheelRPMMonitor(maintainFlywheelSpeed, parameter3, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Flywheel speed task");
   //pros::Task intakeMonitor(monitorIntake, parameter2, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Intake auto movement task");
 
-  autoMode = 0;
+  autoMode = 1;
   if (autoMode == 1)
   {
     auto1();
