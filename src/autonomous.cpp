@@ -271,7 +271,7 @@ void drive(char dir, float inches)
   setLeftDrive(0);
 }
 
-void driveRampUp(char dir, float inches)
+void driveV2(char dir, float inches)
 {
 
   frontRight.tare_position();
@@ -630,19 +630,19 @@ void testAuto()
   drive('f', 33);
   startIntake();
   drive('f', 6);
-  driveRampUp('b', 5);
+  driveV2('b', 5);
   stopIntake();
   startFlywheel(190);
-  driveRampUp('b', 34);
+  driveV2('b', 34);
   turnToTarget(-89, 100);
-  driveRampUp('f', 56.5);
+  driveV2('f', 56.5);
   shootWhenReady(180, 500, false);
-  driveRampUp('f', 20.5);
+  driveV2('f', 20.5);
   shootWhenReady(180, 800, true);
   setGlobalTargetAngle(-98);
-  driveRampUp('f', 18);
+  driveV2('f', 18);
   setGlobalTargetAngle(-90);
-  driveRampUp('b', 48);
+  driveV2('b', 48);
   turnToTarget(0, 100);
 }
 void autoOriginal() //Blue Front Original
