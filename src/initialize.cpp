@@ -73,12 +73,12 @@ void monitorIntake(void *param)
 		{
 			if (!(isBetween(indexerSonar.get_value(), 50, 80)))
 			{
-				intake.move_velocity(200);
+				intake.move_velocity(150);
 				indexer.move_velocity(200);
 			}
 			else if (!(isBetween(intakeSonar.get_value(), 30, 80)))
 			{
-				intake.move_velocity(200);
+				intake.move_velocity(150);
 				indexer.move_velocity(0);
 			}
 			else
@@ -93,7 +93,7 @@ void monitorIntake(void *param)
 		{
 			if (!(isBetween(indexerSonar.get_value(), 50, 80)))
 			{
-				intake.move_velocity(200);
+				intake.move_velocity(150);
 				indexer.move_velocity(200);
 			}
 			else
@@ -167,9 +167,11 @@ void maintainFlywheelSpeed(void *param)
 			{
 				totalError = 0;
 			}
-
+			//Try printing out error - lastError value to see how much effect the D term is having
+			//The loop is running so fast that error and lastError might usually be equal so the D term isn't
+			//having any effect
 			finalAdjustment = ((error * kp) + (totalError * ki) + ((error - lastError) * kd)); //add the rest of PID to this calculation
-			currentFlywheelVoltage = currentFlywheelVoltage + finalAdjustment;
+			currentFlywheelVoltage += finalAdjustment;
 			if (currentFlywheelVoltage > 12000)
 			{
 				currentFlywheelVoltage = 12000;
@@ -187,7 +189,7 @@ void maintainFlywheelSpeed(void *param)
 				onTargetCount = 0;
 				flywheelOnTarget = false;
 			}
-			if (onTargetCount >= 250)
+			if (onTargetCount >= 175)
 			{
 				flywheelOnTarget = true;
 			}
@@ -195,11 +197,18 @@ void maintainFlywheelSpeed(void *param)
 			std::cout << currentVelocity << "\n";
 			//lastError = error;
 		}
+		else if (flywheelAutoVelControl == true)
+		{
+			pros::motor_pid_s_t flywheelPID = pros::Motor::convert_pid(0, .25, .0001, .05);
+			flywheel.set_vel_pid(flywheelPID);
+			flywheel.move_velocity(targetFlywheelSpeed);
+		}
 		else
 		{
 			flywheel.move_voltage(0);
 			flywheelOnTarget = false;
 		}
+		std::cout << flywheel.get_actual_velocity() << "\n";
 		pros::delay(2);
 	}
 }

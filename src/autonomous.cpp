@@ -25,8 +25,8 @@ void setRightDrive(int voltage)
   {
     frontRight.move_voltage(0);
     backRight.move_voltage(0);
-    frontRight.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_BRAKE);
-    backRight.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_BRAKE);
+    frontRight.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_HOLD);
+    backRight.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_HOLD);
   }
   else
   {
@@ -41,8 +41,8 @@ void setLeftDrive(int voltage)
   {
     frontLeft.move_voltage(0);
     frontLeft.move_voltage(0);
-    frontLeft.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_BRAKE);
-    backLeft.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_BRAKE);
+    frontLeft.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_HOLD);
+    backLeft.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_HOLD);
   }
   else
   {
@@ -271,7 +271,7 @@ void drive(char dir, float inches)
   setLeftDrive(0);
 }
 
-void driveV2(char dir, float inches)
+void driveRampUp(char dir, float inches)
 {
 
   frontRight.tare_position();
@@ -384,6 +384,8 @@ void driveTime(char dir, int milliseconds, int topSpeed)
   backLeft.move_voltage(0);
 }
 
+bool flywheelAutoVelControl = false;
+
 void setFlywheelVoltage(int voltage)
 {
   flywheel.move_voltage(voltage);
@@ -396,6 +398,12 @@ void startFlywheelVoltage(int voltage)
 void startFlywheel(int targetSpeed)
 {
   maintainFlywheelSpeedRequested = true;
+  targetFlywheelSpeed = targetSpeed;
+}
+void startFlywheelAutoVelControl(int targetSpeed)
+{
+  maintainFlywheelSpeedRequested = false;
+  flywheelAutoVelControl = true;
   targetFlywheelSpeed = targetSpeed;
 }
 void startFlywheel(int voltage, int targetSpeed)
@@ -480,10 +488,22 @@ void runIntake(char dir, int ticks, bool waitForCompletion)
  **/
 void shootWhenReady(int requiredSpeed, int intakeTicks, bool stopFlywheelOnFinish)
 {
-  while (flywheel.get_actual_velocity() < requiredSpeed)
+  if (flywheelAutoVelControl == true)
   {
-    pros::delay(2);
+    while (flywheel.get_actual_velocity() < requiredSpeed ||
+           flywheel.get_actual_velocity() > requiredSpeed + 4)
+    {
+      pros::delay(2);
+    }
   }
+  else
+  {
+    while (flywheel.get_actual_velocity() < requiredSpeed)
+    {
+      pros::delay(2);
+    }
+  }
+  pros::lcd::print(4, "%d", flywheel.get_actual_velocity());
   intakeMonitor.suspend();
   indexer.move_relative(intakeTicks, 200);
   pros::delay(500);
@@ -619,31 +639,104 @@ vision::signature SIG_6(6, 0, 0, 0, 0, 0, 0, 3.000, 0);
 vision::signature SIG_7(7, 0, 0, 0, 0, 0, 0, 3.000, 0);
 vex::vision vision1(vex::PORT1, 50, BLUEFLAG, REDFLAG, SIG_3, SIG_4, SIG_5, SIG_6, SIG_7);*/
 
-void testAuto()
+/*void testAuto()
 {
   //startIntake();
   /*startFlywheel(120);
   pros::delay(12000);
   shootWhenReady(120, 600, false);*/
-  //Programming Skills Routine Follows://
-  startIntakeOut();
-  drive('f', 33);
+//Programming Skills Routine Follows://
+/*startIntakeOut();
+  driveRampUp('f', 33);
   startIntake();
   drive('f', 6);
-  driveV2('b', 5);
+  driveRampUp('b', 5);
   stopIntake();
   startFlywheel(190);
-  driveV2('b', 34);
+  driveRampUp('b', 34);
   turnToTarget(-89, 100);
-  driveV2('f', 56.5);
+  driveRampUp('f', 56.5);
   shootWhenReady(180, 500, false);
-  driveV2('f', 20.5);
+  driveRampUp('f', 20.5);
   shootWhenReady(180, 800, true);
-  setGlobalTargetAngle(-98);
-  driveV2('f', 18);
+  setGlobalTargetAngle(-99);
+  driveRampUp('f', 18);
   setGlobalTargetAngle(-90);
-  driveV2('b', 48);
+  driveRampUp('b', 48);
   turnToTarget(0, 100);
+  startIntakeOut();
+  startFlywheel(180);
+  driveRampUp('f', 35);
+  startIntake();
+  drive('f', 6);
+  driveRampUp('b', 8);
+  turnToTarget(-73, 100);
+  driveRampUp('f', 27.5);
+  shootWhenReady(180, 500, true);
+  setGlobalTargetAngle(-77);
+  driveRampUp('f', 19.5);
+  turnToTarget(-89, 100);
+  driveRampUp('b', 25);
+  turnToTarget(-177, 100);
+  startIntakeOut();
+  driveRampUp('b', 53);
+  turnToTarget(-210, 100);
+  startIntakeOut();
+  driveRampUp('f', 32);
+  startIntake();
+  driveRampUp('f', 4.5);
+}*/
+void testAuto()
+{
+  startIntake();
+  startFlywheelAutoVelControl(185);
+  shootWhenReady(182, 1000, false);
+  pros::delay(1000);
+  shootWhenReady(182, 1000, false);
+  pros::delay(1000);
+  shootWhenReady(182, 1000, false);
+  pros::delay(1000);
+  shootWhenReady(182, 1000, false);
+  pros::delay(1000);
+  shootWhenReady(182, 1000, false);
+  /*startIntakeOut();
+  driveRampUp('f', 33);
+  startIntake();
+  drive('f', 6);
+  driveRampUp('b', 5);
+  stopIntake();
+  startFlywheel(190);
+  driveRampUp('b', 34);
+  turnToTarget(-89, 100);
+  driveRampUp('f', 56.5);
+  shootWhenReady(180, 500, false);
+  driveRampUp('f', 20.5);
+  shootWhenReady(180, 800, true);
+  setGlobalTargetAngle(-99);
+  driveRampUp('f', 18);
+  setGlobalTargetAngle(-90);
+  driveRampUp('b', 48);
+  turnToTarget(0, 100);
+  startIntakeOut();
+  startFlywheel(180);
+  driveRampUp('f', 35);
+  startIntake();
+  drive('f', 6);
+  driveRampUp('b', 8);
+  turnToTarget(-72.25, 100);
+  driveRampUp('f', 27.5);
+  shootWhenReady(180, 500, true);
+  setGlobalTargetAngle(-77);
+  driveRampUp('f', 19.5);
+  turnToTarget(-89, 100);
+  driveRampUp('b', 25);
+  turnToTarget(-177, 100);
+  driveRampUp('b', 53);
+  driveRampUp('f', 5);
+  turnToTarget(-280, 100);
+  driveRampUp('f', 46.5);
+  turnToTarget(-350, 100);
+  driveRampUp('b', 83);*/
 }
 void autoOriginal() //Blue Front Original
 {
@@ -672,38 +765,28 @@ void auto1() //Blue Front
   drive('f', 30);
 }
 
-void auto2() //Blue Front Shoot first
+void auto2() //Blue Back
 {
-}
-
-void auto3() //Blue Back
-{
-}
-
-/*void auto4() //Red Front
-{
-  startFlywheel(190);
+  startFlywheelAutoVelControl(180);
   startIntake();
   drive('f', 35);
   drive('b', 5);
   stopIntake();
-  drive('b', 31);
-  turnToTarget(-88, 100);
-  drive('f', 10);
-  shootWhenReady(180, 1000, false);
-  drive('f', 19);
-  shootWhenReady(180, 1000, true);
-  turnToTarget(-98, 100);
-  drive('f', 18);
-  drive('b', 25);
-  startIntakeOut();
+  drive('b', 16);
+  turnToTarget(66, 100);
+  shootWhenReady(177, 600, false);
+  startFlywheelAutoVelControl(165);
+  pros::delay(700);
+  shootWhenReady(162, 500, true);
   turnToTarget(0, 100);
-  drive('f', 41);
-  turnToTarget(90, 100);
-  drive('b', 30);
-}*/
+  driveRampUp('b', 8);
+  turnToTarget(88, 100);
+  driveRampUp('f', 22);
+  turnToTarget(178, 100);
+  driveRampUp('b', 45);
+}
 
-void auto4() //Red Front
+void auto3() //Red Front
 {
   startFlywheel(190);
   startIntake();
@@ -726,27 +809,141 @@ void auto4() //Red Front
   turnToTarget(-47, 100);
   drive('f', 30);
 }
-void auto5() //Red Front Shoot First
+
+/*void auto5() //Red Front - Original
 {
+  startFlywheel(190);
+  startIntake();
+  drive('f', 35);
+  drive('b', 5);
+  stopIntake();
+  drive('b', 31);
+  turnToTarget(-88, 100);
+  drive('f', 10);
+  shootWhenReady(180, 1000, false);
+  drive('f', 19);
+  shootWhenReady(180, 1000, true);
+  turnToTarget(-98, 100);
+  drive('f', 18);
+  drive('b', 25);
+  startIntakeOut();
+  turnToTarget(0, 100);
+  drive('f', 41);
+  turnToTarget(90, 100);
+  drive('b', 30);
+}*/
+
+/*void auto4() //Red Front
+{
+  startFlywheel(190);
+  startIntake();
+  drive('f', 35);
+  drive('b', 5);
+  stopIntake();
+  drive('b', 31);
+  turnToTarget(-88, 100);
+  drive('f', 10);
+  shootWhenReady(180, 1000, false);
+  drive('f', 19);
+  shootWhenReady(180, 1000, true);
+  setGlobalTargetAngle(-98);
+  drive('f', 18.5);
+  drive('b', 27);
+  startIntakeOut();
+  turnToTarget(0, 100);
+  drive('f', 25);
+  stopIntake();
+  turnToTarget(-47, 100);
+  drive('f', 30);
+}*/
+void auto4() //Red Back
+{
+  startFlywheelAutoVelControl(185);
+  startIntake();
+  driveRampUp('f', 35);
+  drive('b', 5);
+  stopIntake();
+  driveRampUp('b', 16);
+  turnToTarget(-71, 100);
+  shootWhenReady(182, 600, false);
+  startFlywheelAutoVelControl(165);
+  pros::delay(700);
+  shootWhenReady(162, 500, true);
+  turnToTarget(38, 100);
+  startIntakeOut();
+  driveRampUp('f', 25);
+  drive('b', 8);
+  turnToTarget(88, 100);
+  driveRampUp('b', 25);
+  driveRampUp('b', 45);
+  /*turnToTarget(0, 100);
+  driveRampUp('b', 8);
+  turnToTarget(-88, 100);
+  driveRampUp('f', 20);
+  turnToTarget(-178, 100);
+  driveRampUp('b', 45);*/
 }
-void auto6() //Red Back
+void programmingSkills()
 {
-  startFlywheel(11200, 190);
+  startIntakeOut();
+  driveRampUp('f', 33);
+  startIntake();
+  drive('f', 6);
+  driveRampUp('b', 5);
+  stopIntake();
+  startFlywheel(190);
+  driveRampUp('b', 34);
+  turnToTarget(-89, 100);
+  driveRampUp('f', 56.5);
+  shootWhenReady(180, 500, false);
+  driveRampUp('f', 20.5);
+  shootWhenReady(180, 800, true);
+  setGlobalTargetAngle(-99);
+  driveRampUp('f', 18);
+  setGlobalTargetAngle(-90);
+  driveRampUp('b', 48);
+  turnToTarget(0, 100);
+  startIntakeOut();
+  startFlywheel(180);
+  driveRampUp('f', 35);
+  startIntake();
+  drive('f', 6);
+  driveRampUp('b', 8);
+  turnToTarget(-72.25, 100);
+  driveRampUp('f', 27.5);
+  shootWhenReady(180, 500, true);
+  setGlobalTargetAngle(-77);
+  driveRampUp('f', 19.5);
+  turnToTarget(-89, 100);
+  driveRampUp('b', 25);
+  turnToTarget(-177, 100);
+  driveRampUp('b', 53);
+  driveRampUp('f', 5);
+  turnToTarget(-280, 100);
+  driveRampUp('f', 46.5);
+  turnToTarget(-350, 100);
+  driveRampUp('b', 83);
+}
+/*void auto6() //Red Back
+{
+  startFlywheelAutoVelControl(180);
   startIntake();
   drive('f', 35);
   drive('b', 5);
   stopIntake();
   drive('b', 16);
   turnToTarget(-71, 100);
-  shootWhenReady(190, 600, false);
+  shootWhenReady(177, 600, false);
+  startFlywheelAutoVelControl(165);
   pros::delay(700);
-  setFlywheelVoltage(9000);
-  setFlywheelTargetSpeed(170);
-  shootWhenReady(170, 500, true);
-  turnToTarget(40, 100);
-  startIntakeOut();
-  drive('f', 35);
-}
+  shootWhenReady(162, 500, true);
+  turnToTarget(0, 100);
+  driveRampUp('b', 8);
+  turnToTarget(-88, 100);
+  driveRampUp('f', 20);
+  turnToTarget(-178, 100);
+  driveRampUp('b', 45);
+}/*/
 
 void autonomous()
 {
@@ -754,7 +951,7 @@ void autonomous()
   //pros::Task flywheelRPMMonitor(maintainFlywheelSpeed, parameter3, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Flywheel speed task");
   //pros::Task intakeMonitor(monitorIntake, parameter2, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Intake auto movement task");
 
-  autoMode = 1;
+  autoMode = 0;
   if (autoMode == 1)
   {
     auto1();
@@ -771,15 +968,10 @@ void autonomous()
   {
     auto4();
   }
-  else if (autoMode == 5)
+  else
   {
-    auto5();
+    testAuto();
   }
-  else if (autoMode == 6)
-  {
-    auto6();
-  }
-  testAuto();
   /*flywheelRPMMonitor.suspend();
   intakeMonitor.suspend();*/
 

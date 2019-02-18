@@ -63,6 +63,7 @@ extern pros::Controller master;
 extern int autoMode;
 extern int targetFlywheelSpeed;
 extern bool maintainFlywheelSpeedRequested;
+extern bool flywheelAutoVelControl;
 extern bool flywheelOnTarget;
 extern char *parameter3;
 extern bool intakeUpRequested; //boolean for state of intake request
