@@ -388,16 +388,19 @@ bool flywheelAutoVelControl = false;
 
 void setFlywheelVoltage(int voltage)
 {
-  flywheel.move_voltage(voltage);
+  targetFlywheelVoltage = voltage;
 }
 void startFlywheelVoltage(int voltage)
 {
   maintainFlywheelSpeedRequested = false;
+  flywheelAutoVelControl = false;
+  runFlywheelAtVoltageRequested = true;
   setFlywheelVoltage(voltage);
 }
 void startFlywheel(int targetSpeed)
 {
   maintainFlywheelSpeedRequested = true;
+  flywheelAutoVelControl = false;
   targetFlywheelSpeed = targetSpeed;
 }
 void startFlywheelAutoVelControl(int targetSpeed)
@@ -416,7 +419,10 @@ void startFlywheel(int voltage, int targetSpeed)
 void stopFlywheel()
 {
   maintainFlywheelSpeedRequested = false;
+  flywheelAutoVelControl = false;
+  runFlywheelAtVoltageRequested = false;
   targetFlywheelSpeed = 0;
+  targetFlywheelVoltage = 0;
 }
 
 void startIntake()
@@ -446,6 +452,33 @@ void stopIntake()
 void setFlywheelTargetSpeed(int speed)
 {
   targetFlywheelSpeed = speed;
+}
+void moveCapScorer(int pos)
+{
+  int error = pos - flipper.get_position();
+  float speed = 0;
+  float kp = 100;
+  while (abs(error) > 50)
+  {
+    error = pos - flipper.get_position();
+    speed = error * kp;
+    if (speed < 2500 && speed > 0)
+    {
+      speed = 2500;
+    }
+    else if (speed > -2500 && speed < 0)
+    {
+      speed = -2500;
+    }
+    flipper.move_voltage(speed);
+    std::cout << error << "\n";
+    pros::delay(5);
+  }
+  std::cout << "Done cap scoring";
+}
+char *parameter4;
+void holdCapScorerPos()
+{
 }
 
 void prepareShot()
@@ -491,10 +524,14 @@ void shootWhenReady(int requiredSpeed, int intakeTicks, bool stopFlywheelOnFinis
   if (flywheelAutoVelControl == true)
   {
     while (flywheel.get_actual_velocity() < requiredSpeed ||
-           flywheel.get_actual_velocity() > requiredSpeed + 4)
+           flywheel.get_actual_velocity() > requiredSpeed > 5)
     {
       pros::delay(2);
     }
+    /*while (flywheelOnTarget == false)
+    {
+      pros::delay(2);
+    }*/
   }
   else
   {
@@ -503,7 +540,8 @@ void shootWhenReady(int requiredSpeed, int intakeTicks, bool stopFlywheelOnFinis
       pros::delay(2);
     }
   }
-  pros::lcd::print(4, "%d", flywheel.get_actual_velocity());
+  //pros::lcd::print(4, "%d", flywheel.get_actual_velocity());
+  //std::cout << flywheel.get_actual_velocity() << "\n";
   intakeMonitor.suspend();
   indexer.move_relative(intakeTicks, 200);
   pros::delay(500);
@@ -688,17 +726,15 @@ vex::vision vision1(vex::PORT1, 50, BLUEFLAG, REDFLAG, SIG_3, SIG_4, SIG_5, SIG_
 }*/
 void testAuto()
 {
-  startIntake();
-  startFlywheelAutoVelControl(185);
-  shootWhenReady(182, 1000, false);
-  pros::delay(1000);
-  shootWhenReady(182, 1000, false);
-  pros::delay(1000);
-  shootWhenReady(182, 1000, false);
-  pros::delay(1000);
-  shootWhenReady(182, 1000, false);
-  pros::delay(1000);
-  shootWhenReady(182, 1000, false);
+  //startIntake();
+  startFlywheel(150);
+  /*for (int i = 0; i < 20; i++)
+  {
+    shootWhenReady(150, 1000, false);
+    pros::delay(1000);
+  }*/
+  //moveCapScorer(90);
+
   /*startIntakeOut();
   driveRampUp('f', 33);
   startIntake();
@@ -858,20 +894,20 @@ void auto3() //Red Front
 }*/
 void auto4() //Red Back
 {
-  startFlywheelAutoVelControl(185);
+  startFlywheel(180);
   startIntake();
   driveRampUp('f', 35);
   drive('b', 5);
   stopIntake();
   driveRampUp('b', 16);
   turnToTarget(-71, 100);
-  shootWhenReady(182, 600, false);
-  startFlywheelAutoVelControl(165);
+  shootWhenReady(600, false);
+  startFlywheel(160);
   pros::delay(700);
-  shootWhenReady(162, 500, true);
+  shootWhenReady(500, true);
   turnToTarget(38, 100);
   startIntakeOut();
-  driveRampUp('f', 25);
+  driveRampUp('f', 34);
   drive('b', 8);
   turnToTarget(88, 100);
   driveRampUp('b', 25);
@@ -891,7 +927,8 @@ void programmingSkills()
   drive('f', 6);
   driveRampUp('b', 5);
   stopIntake();
-  startFlywheel(190);
+  startFlywheelVoltage(11000);
+  //flywheel.move_voltage(11000);
   driveRampUp('b', 34);
   turnToTarget(-89, 100);
   driveRampUp('f', 56.5);
@@ -904,25 +941,32 @@ void programmingSkills()
   driveRampUp('b', 48);
   turnToTarget(0, 100);
   startIntakeOut();
-  startFlywheel(180);
+  startFlywheelVoltage(11000);
   driveRampUp('f', 35);
   startIntake();
   drive('f', 6);
   driveRampUp('b', 8);
   turnToTarget(-72.25, 100);
-  driveRampUp('f', 27.5);
+  driveRampUp('f', 29);
   shootWhenReady(180, 500, true);
   setGlobalTargetAngle(-77);
-  driveRampUp('f', 19.5);
+  drive('f', 19.5);
   turnToTarget(-89, 100);
-  driveRampUp('b', 25);
-  turnToTarget(-177, 100);
-  driveRampUp('b', 53);
-  driveRampUp('f', 5);
-  turnToTarget(-280, 100);
-  driveRampUp('f', 46.5);
-  turnToTarget(-350, 100);
-  driveRampUp('b', 83);
+  driveRampUp('b', 23);
+  //Turn to cap next to platform
+  turnToTarget(0, 100);
+  startIntakeOut();
+  driveRampUp('f', 18);
+  driveRampUp('f', 18);
+  driveRampUp('b', 5);
+  turnToTarget(45, 100);
+  driveRampUp('f', 25);
+  turnToTarget(175, 100);
+  startIntakeOut();
+  driveRampUp('f', 28);
+  startIntake();
+  drive('f', 5);
+  driveRampUp('b', 28);
 }
 /*void auto6() //Red Back
 {
@@ -951,7 +995,7 @@ void autonomous()
   //pros::Task flywheelRPMMonitor(maintainFlywheelSpeed, parameter3, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Flywheel speed task");
   //pros::Task intakeMonitor(monitorIntake, parameter2, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Intake auto movement task");
 
-  autoMode = 0;
+  autoMode = 4;
   if (autoMode == 1)
   {
     auto1();
@@ -967,6 +1011,10 @@ void autonomous()
   else if (autoMode == 4)
   {
     auto4();
+  }
+  else if (autoMode == 10)
+  {
+    programmingSkills();
   }
   else
   {

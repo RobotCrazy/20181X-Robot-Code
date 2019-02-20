@@ -63,6 +63,8 @@ extern pros::Controller master;
 extern int autoMode;
 extern int targetFlywheelSpeed;
 extern bool maintainFlywheelSpeedRequested;
+extern bool runFlywheelAtVoltageRequested;
+extern int targetFlywheelVoltage;
 extern bool flywheelAutoVelControl;
 extern bool flywheelOnTarget;
 extern char *parameter3;
@@ -78,6 +80,8 @@ extern int globalTargetAngle;
 
 //Function Externs here/////
 extern bool isBetween(float number, float rangeLower, float rangeUpper);
+extern void setRightDrive(int voltage);
+extern void setLeftDrive(int voltage);
 //extern void maintainFlywheelSpeed(void *param);
 
 //Task Externs here////////
