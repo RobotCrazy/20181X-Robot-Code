@@ -130,24 +130,29 @@ int targetFlywheelVoltage = 0;
 bool flywheelOnTarget = false;
 char *parameter3;
 float currentFlywheelVoltage = 0;
+
+float determineFlywheelVoltage(float targetVelocity)
+{
+	return ((0.6676889314051 * targetVelocity) - 7.03063980643);
+}
 void maintainFlywheelSpeed(void *param)
 {
 
 	//Constants//
-	float kp = 1.3;
+	float kp = .3;
 	float ki = 0;
-	float kd = .5;
+	float kd = 0;
 
 	//PID Variables Here//
-	int currentVelocity = flywheel.get_actual_velocity();
-	int lastVelocity1 = 0;
-	int lastVelocity2 = 0;
-	int lastVelocity3 = 0;
+	float currentVelocity = flywheel.get_actual_velocity();
+	float lastVelocity1 = 0;
+	float lastVelocity2 = 0;
+	float lastVelocity3 = 0;
 	float averageVelocity = 0;
-	int error = targetFlywheelSpeed - currentVelocity;
+	float error = targetFlywheelSpeed - currentVelocity;
 	int lastError = 0;
 	int totalError = 0;
-	int integralActiveZone = 13;
+	int integralActiveZone = 8;
 
 	int onTargetCount = 0;
 	float finalAdjustment = error * kp; //add the rest of PID to this calculation
@@ -163,13 +168,77 @@ void maintainFlywheelSpeed(void *param)
 			averageVelocity = ((currentVelocity + currentVelocity + lastVelocity1 +
 													lastVelocity2 + lastVelocity3) /
 												 5);
+			error = targetFlywheelSpeed - averageVelocity;
+			if (error < -2 || error > 17)
+			{
+				currentFlywheelVoltage = determineFlywheelVoltage(targetFlywheelSpeed);
+			}
+			else
+			{
+				//std::cout << finalAdjustment << "\n";
+				finalAdjustment = (error * kp) + (totalError * ki);
+				currentFlywheelVoltage += finalAdjustment;
+				if (abs(error) > integralActiveZone && error != 0)
+				{
+					totalError += error;
+				}
+				else
+				{
+					totalError = 0;
+				}
+			}
+			lastVelocity3 = lastVelocity2;
+			lastVelocity2 = lastVelocity1;
+			lastVelocity1 = currentVelocity;
+
+			flywheel.move(currentFlywheelVoltage);
+			if (deltaTime >= 100)
+			{
+				std::cout << "Avg:" << averageVelocity << "\n";
+				deltaTime = 0;
+			}
+			else
+			{
+				deltaTime += 20;
+			}
+
+			if (abs(error) < 4)
+			{
+				onTargetCount++;
+			}
+			else
+			{
+				//std::cout << onTargetCount << "\n";
+				onTargetCount = 0;
+				flywheelOnTarget = false;
+			}
+			if (onTargetCount >= 35)
+			{
+				flywheelOnTarget = true;
+				//std::cout << "True" << onTargetCount << "\n";
+			}
+			else
+			{
+				flywheelOnTarget = false;
+			}
+
+			/*if (deltaTime >= 100)
+			{
+				std::cout << " " << averageVelocity << "\n";
+				std::cout << "Flywheel Voltage: " << currentFlywheelVoltage << "\n";
+				deltaTime = 0;
+			}
+			else
+			{
+				deltaTime += 20;
+			}*/
+
+			/*currentVelocity = flywheel.get_actual_velocity();
+			averageVelocity = ((currentVelocity + currentVelocity + lastVelocity1 +
+													lastVelocity2 + lastVelocity3) /
+												 5);
 
 			error = targetFlywheelSpeed - averageVelocity;
-
-			/*if (error == 0)
-			{
-				lastError = 0;
-			}*/
 
 			if (abs(error) < integralActiveZone && error != 0)
 			{
@@ -226,36 +295,37 @@ void maintainFlywheelSpeed(void *param)
 			if (deltaTime >= 100)
 			{
 				/*std::cout << " " << error << "\n";
-				std::cout << "Flywheel Voltage: " << currentFlywheelVoltage << "\n";*/
-				deltaTime = 0;
-			}
-			else
-			{
-				deltaTime += 20;
-			}
-			lastError = error;
-			lastVelocity3 = lastVelocity2;
-			lastVelocity2 = lastVelocity1;
-			lastVelocity1 = currentVelocity;
+				std::cout << "Flywheel Voltage: " << currentFlywheelVoltage << "\n";
+			deltaTime = 0;
 		}
-		else if (flywheelAutoVelControl == true)
+		else
 		{
-			//pros::motor_pid_s_t flywheelPID = pros::Motor::convert_pid(0, 4.75, .0001, 1.8);
-			pros::motor_pid_s_t flywheelPID = pros::Motor::convert_pid(.0000001, .0000000000001, .000001, 25);
-			flywheel.set_vel_pid(flywheelPID);
-			flywheel.move_velocity(targetFlywheelSpeed);
-			std::cout << flywheel.get_vel_pid().kp << "\n";
-			error = targetFlywheelSpeed - flywheel.get_actual_velocity();
-			if (deltaTime >= 100)
-			{
-				//std::cout << flywheel.get_actual_velocity() << "\n";
-				deltaTime = 0;
-			}
-			else
-			{
-				deltaTime += 2;
-			}
-			/*if (error 
+			deltaTime += 20;
+		}
+		lastError = error;
+		lastVelocity3 = lastVelocity2;
+		lastVelocity2 = lastVelocity1;
+		lastVelocity1 = currentVelocity;
+		* /
+	}
+	else if (flywheelAutoVelControl == true)
+	{
+		//pros::motor_pid_s_t flywheelPID = pros::Motor::convert_pid(0, 4.75, .0001, 1.8);
+		pros::motor_pid_s_t flywheelPID = pros::Motor::convert_pid(.0000001, .0000000000001, .000001, 25);
+		flywheel.set_vel_pid(flywheelPID);
+		flywheel.move_velocity(targetFlywheelSpeed);
+		std::cout << flywheel.get_vel_pid().kp << "\n";
+		error = targetFlywheelSpeed - flywheel.get_actual_velocity();
+		if (deltaTime >= 100)
+		{
+			//std::cout << flywheel.get_actual_velocity() << "\n";
+			deltaTime = 0;
+		}
+		else
+		{
+			deltaTime += 2;
+		}
+		/*if (error 
 			{
 				onTargetCount++;
 			}

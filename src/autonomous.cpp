@@ -40,7 +40,7 @@ void setLeftDrive(int voltage)
   if (voltage == 0)
   {
     frontLeft.move_voltage(0);
-    frontLeft.move_voltage(0);
+    backLeft.move_voltage(0);
     frontLeft.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_HOLD);
     backLeft.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_HOLD);
   }
@@ -458,6 +458,7 @@ void moveCapScorer(int pos)
   int error = pos - flipper.get_position();
   float speed = 0;
   float kp = 40;
+  //targetFlipperPos = pos;
   while (abs(error) > 50)
   {
     error = pos - flipper.get_position();
@@ -480,11 +481,8 @@ void moveCapScorer(int pos)
     error = pos - flipper.get_position();
     std::cout << error << "\n;";
   }*/
-  std::cout << "Done cap scoring";
-}
-char *parameter4;
-void holdCapScorerPos()
-{
+  std::cout
+      << "Done cap scoring";
 }
 
 void prepareShot()
@@ -658,6 +656,7 @@ void turnToTarget(float targetAngle, int maxSpeed)
     error = (scaledAngle * 10) - gyro.get_value();
     driveSpeed = error * kp;
   }
+  pros::lcd::print(5, "Done turning");
   setRightDrive(0);
   setLeftDrive(0);
 }
@@ -733,12 +732,14 @@ vex::vision vision1(vex::PORT1, 50, BLUEFLAG, REDFLAG, SIG_3, SIG_4, SIG_5, SIG_
 void testAuto()
 {
   //startIntake();
-  startFlywheel(150);
-  /*for (int i = 0; i < 20; i++)
+  /*startFlywheel(180);
+  for (int i = 0; i < 20; i++)
   {
-    pros::delay(10000);
+    pros::delay(1000);
     shootWhenReady(1000, false);
   }*/
+  turnToTarget(-67, 100);
+
   //moveCapScorer(270);
 
   /*startIntakeOut();
@@ -900,15 +901,15 @@ void auto3() //Red Front
 }*/
 void auto4() //Red Back
 {
-  startFlywheel(180);
+  startFlywheel(176);
   startIntake();
   driveRampUp('f', 35);
   drive('b', 5);
   stopIntake();
   driveRampUp('b', 16);
-  turnToTarget(-71, 100);
+  turnToTarget(-72, 100);
   shootWhenReady(600, false);
-  startFlywheel(160);
+  startFlywheel(164);
   pros::delay(700);
   shootWhenReady(500, true);
   turnToTarget(38, 100);
@@ -916,9 +917,9 @@ void auto4() //Red Back
   driveRampUp('f', 34);
   drive('b', 8);
   turnToTarget(88, 100);
-  moveCapScorer(350);
-  driveRampUp('b', 20);
-  driveRampUp('b', 27);
+  moveCapScorer(600);
+  driveRampUp('b', 19);
+  driveRampUp('b', 29);
   /*turnToTarget(0, 100);
   driveRampUp('b', 8);
   turnToTarget(-88, 100);
@@ -1002,7 +1003,7 @@ void autonomous()
   //pros::Task flywheelRPMMonitor(maintainFlywheelSpeed, parameter3, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Flywheel speed task");
   //pros::Task intakeMonitor(monitorIntake, parameter2, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Intake auto movement task");
 
-  autoMode = 10;
+  autoMode = 4;
   if (autoMode == 1)
   {
     auto1();

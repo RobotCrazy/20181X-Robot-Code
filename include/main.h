@@ -75,6 +75,8 @@ extern char *parameter2;
 extern int targetShootingTicks;
 extern bool shootBallRequested;
 extern int globalTargetAngle;
+/*extern bool holdFlipperRequested = false;
+extern int targetFlipperPos = 0;*/
 
 //extern bool maintainFlywheelSpeedRequested;
 

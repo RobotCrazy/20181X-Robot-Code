@@ -16,21 +16,19 @@
 
 /**************Define important variables here***************************/
 bool holdFlipperRequested = false;
+int targetFlipperPos = 0;
 bool flywheelRPMDropped = false;
 
-void holdFlipper(int pos)
+void holdFlipper(char *param)
 {
+	float kp = 5;
 	if (holdFlipperRequested == true)
 	{
-		int error = flipper.get_position() - pos;
+		int error = targetFlipperPos - flipper.get_position();
 
-		if (error > 10)
+		if (error > 4)
 		{
-			flipper.move_relative(error, 200);
-		}
-		else
-		{
-			flipper.set_brake_mode(pros::motor_brake_mode_e::E_MOTOR_BRAKE_HOLD);
+			flipper.move(error * kp);
 		}
 	}
 }
@@ -184,7 +182,7 @@ void opcontrol()
 			indexer.move_velocity(0);
 		}
 
-		if (master.get_digital(DIGITAL_Y))
+		if (master.get_digital(DIGITAL_X))
 		{
 			if (driveBaseTargetSet == false)
 			{
@@ -199,13 +197,13 @@ void opcontrol()
 
 		if (master.get_digital(DIGITAL_R1))
 		{
-			flywheelSpeed = 127;
-			flywheel.move(flywheelSpeed);
+			flywheelSpeed = 12000;
+			flywheel.move_voltage(flywheelSpeed);
 			std::cout << flywheel.get_actual_velocity() << "\n";
 		}
 		else
 		{
-			flywheel.move(0);
+			flywheel.move_voltage(0);
 			flywheel.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_COAST);
 			/*if (flywheelSpeed > 0)
 			{
@@ -248,8 +246,6 @@ void opcontrol()
 		{
 			flipper.move_velocity(0);
 		}
-
-		holdFlipper(flipperTargetPos);
 
 		pros::delay(2);
 	}
