@@ -37,8 +37,8 @@ void holdFlipper(int pos)
 
 void holdDrivePos(int targetPos)
 {
-	float kp = .5;
-	int tolerance = 5;
+	float kp = 45;
+	int tolerance = 3;
 	int currentPos = (frontRight.get_position() + backRight.get_position() + frontLeft.get_position() + backLeft.get_position()) / 4;
 	int error = targetPos - currentPos;
 
@@ -108,6 +108,16 @@ void maintainFlywheelSpeed(void *param)
 	}
 }*/
 
+int targetDriveBasePos = 0;
+bool driveBaseTargetSet = false;
+void setTargetDriveBasePos()
+{
+	targetDriveBasePos = (frontRight.get_position() + backRight.get_position() +
+												frontLeft.get_position() + backLeft.get_position()) /
+											 4;
+	driveBaseTargetSet = true;
+}
+
 void opcontrol()
 {
 	/*intakeUpRequested = false;
@@ -126,7 +136,7 @@ void opcontrol()
 
 	while (true)
 	{
-		std::cout << "Sonar: " << intakeSonar.get_value() << "\n";
+		//std::cout << "Sonar: " << intakeSonar.get_value() << "\n";
 		leftDrive = master.get_analog(ANALOG_LEFT_Y);
 		rightDrive = master.get_analog(ANALOG_RIGHT_Y);
 		frontLeft.move(leftDrive);
@@ -174,14 +184,30 @@ void opcontrol()
 			indexer.move_velocity(0);
 		}
 
-		if (master.get_digital(DIGITAL_R1))
+		if (master.get_digital(DIGITAL_Y))
 		{
-			flywheelSpeed = 12000;
-			flywheel.move_voltage(flywheelSpeed);
+			if (driveBaseTargetSet == false)
+			{
+				setTargetDriveBasePos();
+			}
+			holdDrivePos(targetDriveBasePos);
 		}
 		else
 		{
-			if (flywheelSpeed > 0)
+			driveBaseTargetSet = false;
+		}
+
+		if (master.get_digital(DIGITAL_R1))
+		{
+			flywheelSpeed = 127;
+			flywheel.move(flywheelSpeed);
+			std::cout << flywheel.get_actual_velocity() << "\n";
+		}
+		else
+		{
+			flywheel.move(0);
+			flywheel.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_COAST);
+			/*if (flywheelSpeed > 0)
 			{
 				flywheelSpeed -= 3;
 			}
@@ -189,7 +215,7 @@ void opcontrol()
 			{
 				flywheelSpeed += 3;
 			}
-			flywheel.move_voltage(flywheelSpeed);
+			flywheel.move(flywheelSpeed);*/
 		}
 
 		if (flywheel.get_actual_velocity() <= 164 && firePrinted == false)

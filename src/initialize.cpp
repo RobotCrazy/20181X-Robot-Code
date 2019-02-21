@@ -134,16 +134,20 @@ void maintainFlywheelSpeed(void *param)
 {
 
 	//Constants//
-	float kp = .18;
+	float kp = 1.3;
 	float ki = 0;
-	float kd = .11;
+	float kd = .5;
 
 	//PID Variables Here//
 	int currentVelocity = flywheel.get_actual_velocity();
+	int lastVelocity1 = 0;
+	int lastVelocity2 = 0;
+	int lastVelocity3 = 0;
+	float averageVelocity = 0;
 	int error = targetFlywheelSpeed - currentVelocity;
 	int lastError = 0;
 	int totalError = 0;
-	int integralActiveZone = 15;
+	int integralActiveZone = 13;
 
 	int onTargetCount = 0;
 	float finalAdjustment = error * kp; //add the rest of PID to this calculation
@@ -156,17 +160,24 @@ void maintainFlywheelSpeed(void *param)
 		if (maintainFlywheelSpeedRequested == true)
 		{
 			currentVelocity = flywheel.get_actual_velocity();
+			averageVelocity = ((currentVelocity + currentVelocity + lastVelocity1 +
+													lastVelocity2 + lastVelocity3) /
+												 5);
 
-			error = targetFlywheelSpeed - currentVelocity;
+			error = targetFlywheelSpeed - averageVelocity;
 
-			if (error == 0)
+			/*if (error == 0)
 			{
 				lastError = 0;
-			}
+			}*/
 
 			if (abs(error) < integralActiveZone && error != 0)
 			{
 				totalError += error;
+				if (totalError > 10 / ki)
+				{
+					totalError = 10 / ki;
+				}
 			}
 			else
 			{
@@ -177,7 +188,11 @@ void maintainFlywheelSpeed(void *param)
 			//having any effect
 
 			finalAdjustment = ((error * kp) + (totalError * ki) + ((error - lastError) * kd)); //add the rest of PID to this calculation
-			currentFlywheelVoltage += finalAdjustment;
+			if (abs(error) > 4)
+			{
+				currentFlywheelVoltage += finalAdjustment;
+			}
+
 			if (currentFlywheelVoltage > 127)
 			{
 				currentFlywheelVoltage = 127;
@@ -189,18 +204,20 @@ void maintainFlywheelSpeed(void *param)
 
 			flywheel.move(currentFlywheelVoltage);
 
-			if (abs(error) < 7)
+			if (abs(error) < 6)
 			{
 				onTargetCount++;
 			}
 			else
 			{
+				std::cout << onTargetCount << "\n";
 				onTargetCount = 0;
 				flywheelOnTarget = false;
 			}
-			if (onTargetCount >= 15)
+			if (onTargetCount >= 35)
 			{
 				flywheelOnTarget = true;
+				std::cout << "True" << onTargetCount << "\n";
 			}
 			else
 			{
@@ -208,7 +225,8 @@ void maintainFlywheelSpeed(void *param)
 			}
 			if (deltaTime >= 100)
 			{
-				std::cout << flywheel.get_actual_velocity() << "\n";
+				/*std::cout << " " << error << "\n";
+				std::cout << "Flywheel Voltage: " << currentFlywheelVoltage << "\n";*/
 				deltaTime = 0;
 			}
 			else
@@ -216,6 +234,9 @@ void maintainFlywheelSpeed(void *param)
 				deltaTime += 20;
 			}
 			lastError = error;
+			lastVelocity3 = lastVelocity2;
+			lastVelocity2 = lastVelocity1;
+			lastVelocity1 = currentVelocity;
 		}
 		else if (flywheelAutoVelControl == true)
 		{
@@ -258,7 +279,6 @@ void maintainFlywheelSpeed(void *param)
 			flywheel.move_voltage(0);
 			flywheelOnTarget = false;
 		}
-		//std::cout << flywheel.get_actual_velocity() << "\n";
 		pros::delay(20);
 	}
 }
@@ -328,6 +348,7 @@ void initialize()
 
 	flipper.tare_position();
 	visionSensor.clear_led();
+	flywheel.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_COAST);
 }
 
 /**

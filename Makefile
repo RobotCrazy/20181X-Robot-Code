@@ -15,7 +15,7 @@ INCDIR=$(ROOT)/include
 WARNFLAGS+=
 EXTRA_CFLAGS=
 EXTRA_CXXFLAGS=
-USE_PACKAGE:=1
+USE_PACKAGE:=0
 
 # Set this to 1 to add additional rules to compile your project as a PROS library template
 IS_LIBRARY:=0
