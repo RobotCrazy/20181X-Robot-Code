@@ -84,6 +84,7 @@ extern int targetFlipperPos = 0;*/
 extern bool isBetween(float number, float rangeLower, float rangeUpper);
 extern void setRightDrive(int voltage);
 extern void setLeftDrive(int voltage);
+extern void holdFlipper(char *param);
 //extern void maintainFlywheelSpeed(void *param);
 
 //Task Externs here////////

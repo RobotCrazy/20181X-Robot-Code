@@ -30,20 +30,27 @@ void holdFlipper(char *param)
 		{
 			flipper.move(error * kp);
 		}
+		else
+		{
+			flipper.move(0);
+			flipper.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_HOLD);
+		}
 	}
 }
 
-void holdDrivePos(int targetPos)
+void holdDrivePos(int targetPosL, int targetPosR)
 {
-	float kp = 45;
+	float kp = 80;
 	int tolerance = 3;
-	int currentPos = (frontRight.get_position() + backRight.get_position() + frontLeft.get_position() + backLeft.get_position()) / 4;
-	int error = targetPos - currentPos;
+	float currentPosL = (frontLeft.get_position() + backLeft.get_position()) / 2;
+	float currentPosR = (frontRight.get_position() + backRight.get_position()) / 2;
+	float errorL = targetPosL - currentPosL;
+	float errorR = targetPosR - currentPosR;
 
-	if (abs(error) > tolerance)
+	if (abs(errorL) > tolerance || abs(errorR) > tolerance)
 	{
-		setLeftDrive(error * kp);
-		setRightDrive(error * kp);
+		setLeftDrive(errorL * kp);
+		setRightDrive(errorR * kp);
 	}
 	else
 	{
@@ -106,13 +113,14 @@ void maintainFlywheelSpeed(void *param)
 	}
 }*/
 
-int targetDriveBasePos = 0;
+int targetDriveBasePosL = 0;
+int targetDriveBasePosR = 0;
 bool driveBaseTargetSet = false;
 void setTargetDriveBasePos()
 {
-	targetDriveBasePos = (frontRight.get_position() + backRight.get_position() +
-												frontLeft.get_position() + backLeft.get_position()) /
-											 4;
+	targetDriveBasePosR = (frontRight.get_position() + backRight.get_position()) / 2;
+	targetDriveBasePosL = (frontLeft.get_position() + backLeft.get_position()) / 2;
+
 	driveBaseTargetSet = true;
 }
 
@@ -131,6 +139,7 @@ void opcontrol()
 	bool firePrinted = false;
 	int flipperTargetPos = 0;
 	float flywheelSpeed = 0;
+	flipper.move_absolute(0, 180);
 
 	while (true)
 	{
@@ -188,7 +197,7 @@ void opcontrol()
 			{
 				setTargetDriveBasePos();
 			}
-			holdDrivePos(targetDriveBasePos);
+			holdDrivePos(targetDriveBasePosL, targetDriveBasePosR);
 		}
 		else
 		{

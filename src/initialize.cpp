@@ -133,7 +133,20 @@ float currentFlywheelVoltage = 0;
 
 float determineFlywheelVoltage(float targetVelocity)
 {
-	return ((0.6676889314051 * targetVelocity) - 7.03063980643);
+	float voltage = ((0.6676889314051 * targetVelocity) - 7.03063980643);
+
+	if (voltage > 127)
+	{
+		voltage = 127;
+	}
+	else if (voltage < 0)
+	{
+		voltage = 0;
+	}
+	else
+	{
+		return voltage;
+	}
 }
 void maintainFlywheelSpeed(void *param)
 {
@@ -169,13 +182,13 @@ void maintainFlywheelSpeed(void *param)
 													lastVelocity2 + lastVelocity3) /
 												 5);
 			error = targetFlywheelSpeed - averageVelocity;
+
 			if (error < -2 || error > 17)
 			{
 				currentFlywheelVoltage = determineFlywheelVoltage(targetFlywheelSpeed);
 			}
 			else
 			{
-				//std::cout << finalAdjustment << "\n";
 				finalAdjustment = (error * kp) + (totalError * ki);
 				currentFlywheelVoltage += finalAdjustment;
 				if (abs(error) > integralActiveZone && error != 0)
@@ -191,7 +204,35 @@ void maintainFlywheelSpeed(void *param)
 			lastVelocity2 = lastVelocity1;
 			lastVelocity1 = currentVelocity;
 
+			if (currentFlywheelVoltage > 127)
+			{
+				currentFlywheelVoltage = 127;
+			}
+			else if (currentFlywheelVoltage < 0)
+			{
+				currentFlywheelVoltage = 0;
+			}
+
 			flywheel.move(currentFlywheelVoltage);
+
+			if (abs(error) < 4)
+			{
+				onTargetCount++;
+			}
+			else
+			{
+				onTargetCount = 0;
+				flywheelOnTarget = false;
+			}
+			if (onTargetCount >= 50)
+			{
+				flywheelOnTarget = true;
+			}
+			else
+			{
+				flywheelOnTarget = false;
+			}
+
 			if (deltaTime >= 100)
 			{
 				std::cout << "Avg:" << averageVelocity << "\n";
@@ -200,26 +241,6 @@ void maintainFlywheelSpeed(void *param)
 			else
 			{
 				deltaTime += 20;
-			}
-
-			if (abs(error) < 4)
-			{
-				onTargetCount++;
-			}
-			else
-			{
-				//std::cout << onTargetCount << "\n";
-				onTargetCount = 0;
-				flywheelOnTarget = false;
-			}
-			if (onTargetCount >= 35)
-			{
-				flywheelOnTarget = true;
-				//std::cout << "True" << onTargetCount << "\n";
-			}
-			else
-			{
-				flywheelOnTarget = false;
 			}
 
 			/*if (deltaTime >= 100)
