@@ -184,7 +184,7 @@ void alignToFlag()
   setLeftDrive(0);
 }
 
-void drive(char dir, float inches, int speed)
+void drive(char dir, float inches, int driveSpeed)
 {
 
   frontRight.tare_position();
@@ -193,16 +193,14 @@ void drive(char dir, float inches, int speed)
   backLeft.tare_position();
 
   int ticks = (int)((inches / (pi * WHEEL_RADIUS)) * 180);
-  int angleCorrectionFactor = 40;
-  int startingAngle = globalTargetAngle;
 
   //P Variables Here//
   int error = ticks - ((frontRight.get_position() + backRight.get_position() + frontLeft.get_position() + backLeft.get_position()) / 4);
-  float driveSpeed = 0;
   float lastDriveSpeed = 0;
   int angleError = 0;
 
   //Constants here//
+  float increaseFactor = .4;
 
   //Tolerance Variables Here//
   int speedTolerance = 10;
@@ -213,7 +211,7 @@ void drive(char dir, float inches, int speed)
 
   if (dir == 'b')
   {
-    speed *= -1;
+    driveSpeed *= -1;
   }
 
   while (abs(frontRight.get_position() + backRight.get_position() + frontLeft.get_position() +
@@ -221,11 +219,29 @@ void drive(char dir, float inches, int speed)
              4 <
          abs(ticks))
   {
-
+    std::cout << "Inside while loop\n";
     error = ticks - ((frontRight.get_position() + backRight.get_position() + frontLeft.get_position() + backLeft.get_position()) / 4);
 
-    setLeftDrive(speed);
-    setRightDrive(speed);
+    if (driveSpeed > 0 && lastDriveSpeed >= 0 && driveSpeed > lastDriveSpeed)
+    {
+      std::cout << "First if\n";
+      setLeftDrive(lastDriveSpeed + increaseFactor);
+      setRightDrive(lastDriveSpeed + increaseFactor);
+      lastDriveSpeed += increaseFactor;
+    }
+    else if (driveSpeed < 0 && lastDriveSpeed <= 0 && driveSpeed < lastDriveSpeed)
+    {
+      std::cout << "Second if\n";
+      setLeftDrive(lastDriveSpeed - increaseFactor);
+      setRightDrive(lastDriveSpeed - increaseFactor);
+      lastDriveSpeed -= increaseFactor;
+    }
+    else
+    {
+      setLeftDrive(driveSpeed);
+      setRightDrive(driveSpeed);
+      lastDriveSpeed = driveSpeed;
+    }
   }
   setRightDrive(0);
   setLeftDrive(0);
@@ -503,22 +519,12 @@ void setFlywheelTargetSpeed(int speed)
 void moveCapScorer(int pos)
 {
   int error = pos - flipper.get_position();
-  float speed = 0;
-  float kp = 40;
+  float speed = 10000;
   //targetFlipperPos = pos;
   while (abs(error) > 50)
   {
     error = pos - flipper.get_position();
-    speed = error * kp;
-    if (speed < 20 && speed > 0)
-    {
-      speed = 20;
-    }
-    else if (speed > -20 && speed < 0)
-    {
-      speed = -20;
-    }
-    flipper.move(speed);
+    flipper.move_voltage(speed);
     std::cout << flipper.get_position() << "\n";
     pros::delay(20);
   }
@@ -779,8 +785,11 @@ vex::vision vision1(vex::PORT1, 50, BLUEFLAG, REDFLAG, SIG_3, SIG_4, SIG_5, SIG_
 }*/
 void testAuto()
 {
+  moveCapScorer(480);
+  drive('b', 26, 8000);
+
   //Red Cross Court Shooting//
-  startFlywheel(188);
+  /*startFlywheel(188);
   startIntake();
   driveRampUp('f', 37);
   drive('b', 5);
@@ -796,7 +805,7 @@ void testAuto()
   drive('f', 4);
   turnToTarget(89, 100);
   moveCapScorer(500);
-  drive('b', 32, 9000);
+  drive('b', 32, 9000);*/
   //Red Cross Court Shooting ends here//
 
   /*startIntake();
@@ -870,22 +879,21 @@ void auto1() //Blue Front
   startIntake();
   driveRampUp('f', 35);
   drive('b', 5);
-  driveRampUp('b', 31);
-  turnToTarget(88, 100);
+  driveRampUp('b', 30.25);
+  turnToTarget(86, 100);
   drive('f', 10);
   shootWhenReady(180, 1000, false);
   drive('f', 19);
   shootWhenReady(180, 1000, true);
-  setGlobalTargetAngle(98);
+  setGlobalTargetAngle(101);
   drive('f', 18.5);
-  driveRampUp('b', 27);
-  startIntakeOut();
+  driveRampUp('b', 26);
   turnToTarget(176, 100);
-  driveRampUp('b', 14);
-  moveCapScorer(500);
+  drive('b', 3);
+  moveCapScorer(480);
   stopIntake();
-  turnToTarget(225, 100);
-  drive('b', 30);
+  turnToTarget(210.5, 100);
+  drive('b', 47);
 }
 
 void auto2() //Blue Back
@@ -915,7 +923,6 @@ void auto3() //Red Front
   startIntake();
   driveRampUp('f', 35);
   drive('b', 5);
-  stopIntake();
   driveRampUp('b', 31);
   turnToTarget(-88, 100);
   drive('f', 10);
@@ -924,62 +931,15 @@ void auto3() //Red Front
   shootWhenReady(180, 1000, true);
   setGlobalTargetAngle(-98);
   drive('f', 18.5);
-  driveRampUp('b', 27);
-  startIntakeOut();
+  driveRampUp('b', 26);
   turnToTarget(-176, 100);
-  driveRampUp('b', 14);
-  moveCapScorer(500);
+  drive('b', 3);
+  moveCapScorer(480);
   stopIntake();
-  turnToTarget(-225, 100);
-  drive('b', 30);
+  turnToTarget(-210.5, 100);
+  drive('b', 47);
 }
 
-/*void auto5() //Red Front - Original
-{
-  startFlywheel(190);
-  startIntake();
-  drive('f', 35);
-  drive('b', 5);
-  stopIntake();
-  drive('b', 31);
-  turnToTarget(-88, 100);
-  drive('f', 10);
-  shootWhenReady(180, 1000, false);
-  drive('f', 19);
-  shootWhenReady(180, 1000, true);
-  turnToTarget(-98, 100);
-  drive('f', 18);
-  drive('b', 25);
-  startIntakeOut();
-  turnToTarget(0, 100);
-  drive('f', 41);
-  turnToTarget(90, 100);
-  drive('b', 30);
-}*/
-
-/*void auto4() //Red Front
-{
-  startFlywheel(190);
-  startIntake();
-  drive('f', 35);
-  drive('b', 5);
-  stopIntake();
-  drive('b', 31);
-  turnToTarget(-88, 100);
-  drive('f', 10);
-  shootWhenReady(180, 1000, false);
-  drive('f', 19);
-  shootWhenReady(180, 1000, true);
-  setGlobalTargetAngle(-98);
-  drive('f', 18.5);
-  drive('b', 27);
-  startIntakeOut();
-  turnToTarget(0, 100);
-  drive('f', 25);
-  stopIntake();
-  turnToTarget(-47, 100);
-  drive('f', 30);
-}*/
 void auto4() //Red Back
 {
   startFlywheel(176);
@@ -1014,16 +974,37 @@ void auto4() //Red Back
   turnToTarget(-178, 100);
   driveRampUp('b', 45);*/
 }
-void programmingSkills()
+void crossCourtRed() //Denoted with 20
+{
+  startFlywheel(188);
+  startIntake();
+  driveRampUp('f', 37);
+  drive('b', 5);
+  turnToTarget(-57.5, 100);
+  pros::delay(1300); //Just to wait for the other alliance to shoot before countering
+  shootWhenReady(600, false);
+  startFlywheel(169);
+  turnToTarget(-59, 100);
+  pros::delay(700);
+  shootWhenReady(500, true);
+  stopIntake();
+  turnToTarget(0, 100);
+  drive('f', 4);
+  turnToTarget(89, 100);
+  moveCapScorer(500);
+  drive('b', 32, 9000);
+}
+void crossCourtBlue() //Denoted with 30
+{
+}
+void programmingSkills() //Denoted with 10
 {
   startIntakeOut();
   driveRampUp('f', 33);
   startIntake();
   drive('f', 6);
   driveRampUp('b', 5);
-  stopIntake();
   startFlywheelVoltage(11000);
-  //flywheel.move_voltage(11000);
   driveRampUp('b', 34);
   turnToTarget(-89, 100);
   driveRampUp('f', 56.5);
@@ -1044,45 +1025,32 @@ void programmingSkills()
   turnToTarget(-72.25, 100);
   driveRampUp('f', 29);
   shootWhenReady(180, 500, true); //Shoot middle flag in middle pole
-  setGlobalTargetAngle(-77);
+  setGlobalTargetAngle(-85);
   drive('f', 19.5);
   turnToTarget(-89, 100);
   driveRampUp('b', 23);
   //Turn to cap next to platform
   turnToTarget(-175, 100);
   driveRampUp('b', 34);
-  moveCapScorer(1000);
+  moveCapScorer(480);
   turnToTarget(-315, 100);
-  driveRampUp('f', 30);
+  driveRampUp('f', 32);
   turnToTarget(-175, 100);
-  startIntakeOut();
-  driveRampUp('f', 25);
-  startFlywheelVoltage(11000);
   startIntake();
+  driveRampUp('f', 29);
+  startFlywheelVoltage(11000);
   drive('f', 5);
-  driveRampUp('b', 28);
+  driveRampUp('b', 22);
+  turnToTarget(-87, 100);
+  drive('f', 8);
+  shootWhenReady(180, 600, true);
+  turnToTarget(52, 100);
+  driveRampUp('f', 35);
+  turnToTarget(-4, 100);
+  driveRampUp('b', 25);
+  driveRampUp('b', 25);
   //turnToTarget()
 }
-/*void auto6() //Red Back
-{
-  startFlywheelAutoVelControl(180);
-  startIntake();
-  drive('f', 35);
-  drive('b', 5);
-  stopIntake();
-  drive('b', 16);
-  turnToTarget(-71, 100);
-  shootWhenReady(177, 600, false);
-  startFlywheelAutoVelControl(165);
-  pros::delay(700);
-  shootWhenReady(162, 500, true);
-  turnToTarget(0, 100);
-  driveRampUp('b', 8);
-  turnToTarget(-88, 100);
-  driveRampUp('f', 20);
-  turnToTarget(-178, 100);
-  driveRampUp('b', 45);
-}/*/
 
 void autonomous()
 {
@@ -1090,7 +1058,7 @@ void autonomous()
   //pros::Task flywheelRPMMonitor(maintainFlywheelSpeed, parameter3, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Flywheel speed task");
   //pros::Task intakeMonitor(monitorIntake, parameter2, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Intake auto movement task");
 
-  autoMode = 4;
+  autoMode = 0;
   if (autoMode == 1)
   {
     auto1();
@@ -1111,39 +1079,16 @@ void autonomous()
   {
     programmingSkills();
   }
+  else if (autoMode == 20)
+  {
+    crossCourtRed();
+  }
+  else if (autoMode == 30)
+  {
+    crossCourtBlue();
+  }
   else
   {
     testAuto();
   }
-  /*flywheelRPMMonitor.suspend();
-  intakeMonitor.suspend();*/
-
-  /*startFlywheel(10000);
-  drive('f', 41, 150, true);
-  runIntake('u', 550, true);
-  drive('b', 35, 150, true);
-  turnToTarget(-64.5, 100);
-  shootWhenReady(175, 400);
-  pros::delay(250);
-  shootWhenReady(150, 600);
-  drive('f', 18, 100, true);
-  turnToTarget(-140, 100);
-  drive('b', 55, 200, true);
-  */
-
-  //-70 is a complete turn around for the platform
-
-  /*startFlywheel(10000);
-  drive('f', 41, 150, true);
-  runIntake('u', 1000, true);
-  drive('b', 35, 150, true);
-  turn('l', 105.5, 100, true);
-  drive('b', 30, 125, true);
-  shootWhenReady(180, 900);
-  drive('f', 44, 150, true);
-  turn('l', 105.5, 50, true);
-  drive('b', 55, 200, true);*/
-  //drive('f', )
-  //runIntake('u', 1000, true);
-  //turn('r', 90, true);
 }

@@ -246,14 +246,10 @@ void opcontrol()
 			flipper.move_velocity(-200);
 			holdFlipperRequested = false;
 		}
-		else if (master.get_digital(DIGITAL_RIGHT))
-		{
-			holdFlipperRequested = true;
-			flipperTargetPos = 200;
-		}
-		else if (holdFlipperRequested == false)
+		else
 		{
 			flipper.move_velocity(0);
+			flipper.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_HOLD);
 		}
 
 		pros::delay(2);
