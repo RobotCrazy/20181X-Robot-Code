@@ -898,23 +898,23 @@ void auto1() //Blue Front
 
 void auto2() //Blue Back
 {
-  startFlywheelAutoVelControl(180);
+  startFlywheel(177);
   startIntake();
-  drive('f', 35);
+  driveRampUp('f', 35);
   drive('b', 5);
-  stopIntake();
-  drive('b', 16);
-  turnToTarget(66, 100);
-  shootWhenReady(177, 600, false);
-  startFlywheelAutoVelControl(165);
+  driveRampUp('b', 16);
+  turnToTarget(65, 100);
+  shootWhenReady(600, false);
+  startFlywheel(164);
   pros::delay(700);
-  shootWhenReady(162, 500, true);
+  shootWhenReady(500, true);
+
+  stopIntake();
   turnToTarget(0, 100);
-  driveRampUp('b', 8);
-  turnToTarget(88, 100);
-  driveRampUp('f', 22);
-  turnToTarget(178, 100);
-  driveRampUp('b', 45);
+  driveRampUp('f', 13.5);
+  turnToTarget(-89, 100);
+  moveCapScorer(500);
+  drive('b', 26.5, 8000);
 }
 
 void auto3() //Red Front
@@ -962,7 +962,7 @@ void auto4() //Red Back
   driveRampUp('b', 29);*/
   stopIntake();
   turnToTarget(0, 100);
-  driveRampUp('f', 21);
+  driveRampUp('f', 18);
   turnToTarget(89, 100);
   moveCapScorer(500);
   drive('b', 28, 8000);
@@ -984,7 +984,6 @@ void crossCourtRed() //Denoted with 20
   pros::delay(1300); //Just to wait for the other alliance to shoot before countering
   shootWhenReady(600, false);
   startFlywheel(169);
-  turnToTarget(-59, 100);
   pros::delay(700);
   shootWhenReady(500, true);
   stopIntake();
@@ -1047,8 +1046,9 @@ void programmingSkills() //Denoted with 10
   turnToTarget(52, 100);
   driveRampUp('f', 35);
   turnToTarget(-4, 100);
-  driveRampUp('b', 25);
-  driveRampUp('b', 25);
+  drive('b', 10);
+  drive('b', 30, 9000);
+  drive('b', 25, 9000);
   //turnToTarget()
 }
 
@@ -1058,7 +1058,7 @@ void autonomous()
   //pros::Task flywheelRPMMonitor(maintainFlywheelSpeed, parameter3, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Flywheel speed task");
   //pros::Task intakeMonitor(monitorIntake, parameter2, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Intake auto movement task");
 
-  autoMode = 0;
+  autoMode = 20;
   if (autoMode == 1)
   {
     auto1();
