@@ -873,7 +873,7 @@ void testAuto()
 void autoOriginal() //Blue Front Original
 {
 }
-void auto1() //Blue Front
+void auto1() //Blue Front (Slot 1)
 {
   startFlywheel(190);
   startIntake();
@@ -896,7 +896,7 @@ void auto1() //Blue Front
   drive('b', 47);
 }
 
-void auto2() //Blue Back
+void auto2() //Blue Back (Slot 2)
 {
   startFlywheel(177);
   startIntake();
@@ -917,7 +917,7 @@ void auto2() //Blue Back
   drive('b', 26.5, 8000);
 }
 
-void auto3() //Red Front
+void auto3() //Red Front (Slot 3)
 {
   startFlywheel(190);
   startIntake();
@@ -940,7 +940,7 @@ void auto3() //Red Front
   drive('b', 47);
 }
 
-void auto4() //Red Back
+void auto4() //Red Back (Slot 4)
 {
   startFlywheel(176);
   startIntake();
@@ -974,7 +974,7 @@ void auto4() //Red Back
   turnToTarget(-178, 100);
   driveRampUp('b', 45);*/
 }
-void crossCourtRed() //Denoted with 20
+void crossCourtRed() //Denoted with 20 (Slot 5)
 {
   startFlywheel(188);
   startIntake();
@@ -993,8 +993,24 @@ void crossCourtRed() //Denoted with 20
   moveCapScorer(500);
   drive('b', 32, 9000);
 }
-void crossCourtBlue() //Denoted with 30
+void crossCourtBlue() //Denoted with 30 (Slot 6)
 {
+  startFlywheel(188);
+  startIntake();
+  driveRampUp('f', 37);
+  drive('b', 5);
+  turnToTarget(50.5, 100);
+  pros::delay(1300); //Just to wait for the other alliance to shoot before countering
+  shootWhenReady(600, false);
+  startFlywheel(169);
+  pros::delay(700);
+  shootWhenReady(500, true);
+  stopIntake();
+  turnToTarget(0, 100);
+  drive('f', 4);
+  turnToTarget(-89, 100);
+  moveCapScorer(500);
+  drive('b', 32, 9000);
 }
 void programmingSkills() //Denoted with 10
 {
@@ -1058,7 +1074,7 @@ void autonomous()
   //pros::Task flywheelRPMMonitor(maintainFlywheelSpeed, parameter3, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Flywheel speed task");
   //pros::Task intakeMonitor(monitorIntake, parameter2, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Intake auto movement task");
 
-  autoMode = 20;
+  autoMode = 30;
   if (autoMode == 1)
   {
     auto1();
