@@ -880,7 +880,7 @@ void auto1() //Blue Front (Slot 1)
   driveRampUp('f', 35);
   drive('b', 5);
   driveRampUp('b', 30.25);
-  turnToTarget(86, 100);
+  turnToTarget(84, 100);
   drive('f', 10);
   shootWhenReady(180, 1000, false);
   drive('f', 19);
@@ -889,7 +889,7 @@ void auto1() //Blue Front (Slot 1)
   drive('f', 18.5);
   driveRampUp('b', 26);
   turnToTarget(176, 100);
-  drive('b', 3);
+  drive('b', 6);
   moveCapScorer(480);
   stopIntake();
   turnToTarget(210.5, 100);
@@ -911,7 +911,7 @@ void auto2() //Blue Back (Slot 2)
 
   stopIntake();
   turnToTarget(0, 100);
-  driveRampUp('f', 13.5);
+  driveRampUp('f', 14.5);
   turnToTarget(-89, 100);
   moveCapScorer(500);
   drive('b', 26.5, 8000);
@@ -976,7 +976,7 @@ void auto4() //Red Back (Slot 4)
 }
 void crossCourtRed() //Denoted with 20 (Slot 5)
 {
-  startFlywheel(188);
+  startFlywheel(186.5);
   startIntake();
   driveRampUp('f', 37);
   drive('b', 5);
@@ -1074,7 +1074,7 @@ void autonomous()
   //pros::Task flywheelRPMMonitor(maintainFlywheelSpeed, parameter3, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Flywheel speed task");
   //pros::Task intakeMonitor(monitorIntake, parameter2, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Intake auto movement task");
 
-  autoMode = 30;
+  autoMode = 20;
   if (autoMode == 1)
   {
     auto1();
