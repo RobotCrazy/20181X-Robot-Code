@@ -43,18 +43,14 @@
 //#include "okapi/api.hpp"
 //#include "pros/api_legacy.h"
 #include "pros/rtos.hpp"
-//#include "mathUtil.h"
+#include "mathUtil.h"
+#include "chassis.h"
 
-extern pros::Motor frontLeft;
-extern pros::Motor backLeft;
-extern pros::Motor frontRight;
-extern pros::Motor backRight;
 extern pros::Motor intake;
 extern pros::Motor indexer;
 extern pros::Motor flywheel;
 extern pros::Motor flipper;
 
-extern pros::ADIGyro gyro;
 extern pros::ADIUltrasonic indexerSonar;
 extern pros::ADIUltrasonic intakeSonar;
 extern pros::Vision visionSensor;

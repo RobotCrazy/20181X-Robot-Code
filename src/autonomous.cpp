@@ -1,55 +1,7 @@
 #include "main.h"
 
-#define WHEEL_RADIUS 2
-#define PI atan(1) * 4
-#define WHEEL_CIRCUMFERENCE WHEEL_RADIUS * 2 * pi
-
-double pi = (atan(1) * 4);
-double wheelCircumference = (WHEEL_RADIUS * 2 * pi);
+double wheelCircumference = (WHEEL_RADIUS * 2 * PI);
 double gyroScale = .78;
-int globalTargetAngle = 0;
-
-double degreeToRadian(double degrees)
-{
-  return degrees * (pi / 180.0);
-}
-
-bool isBetween(float number, float rangeLower, float rangeUpper)
-{
-  return (number > rangeLower && number < rangeUpper);
-}
-
-void setRightDrive(int voltage)
-{
-  if (voltage == 0)
-  {
-    frontRight.move_voltage(0);
-    backRight.move_voltage(0);
-    frontRight.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_HOLD);
-    backRight.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_HOLD);
-  }
-  else
-  {
-    frontRight.move_voltage(voltage);
-    backRight.move_voltage(voltage);
-  }
-}
-
-void setLeftDrive(int voltage)
-{
-  if (voltage == 0)
-  {
-    frontLeft.move_voltage(0);
-    backLeft.move_voltage(0);
-    frontLeft.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_HOLD);
-    backLeft.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_HOLD);
-  }
-  else
-  {
-    frontLeft.move_voltage(voltage);
-    backLeft.move_voltage(voltage);
-  }
-}
 
 /*pros::vision_signature_s_t REDFLAG;
 pros::vision_signature_s_t BLUEFLAG;
@@ -95,7 +47,7 @@ void driveShootAsync(char dir, float inches, int distance1, int distance2)
   frontLeft.tare_position();
   backLeft.tare_position();
 
-  int ticks = (int)((inches / (pi * WHEEL_RADIUS)) * 180);
+  int ticks = (int)((inches / (PI * WHEEL_RADIUS)) * 180);
   int angleCorrectionFactor = 60;
   int startingAngle = globalTargetAngle;
   int traveledDistance = 0;
@@ -184,156 +136,6 @@ void alignToFlag()
   setLeftDrive(0);
 }
 
-void drive(char dir, float inches, int driveSpeed)
-{
-
-  frontRight.tare_position();
-  backRight.tare_position();
-  frontLeft.tare_position();
-  backLeft.tare_position();
-
-  int ticks = (int)((inches / (pi * WHEEL_RADIUS)) * 180);
-
-  //P Variables Here//
-  int error = ticks - ((frontRight.get_position() + backRight.get_position() + frontLeft.get_position() + backLeft.get_position()) / 4);
-  float lastDriveSpeed = 0;
-  int angleError = 0;
-
-  //Constants here//
-  float increaseFactor = .4;
-
-  //Tolerance Variables Here//
-  int speedTolerance = 10;
-  int positionTolerance = 30;
-
-  //Deadbands//
-  int speedDeadband = 2500;
-
-  if (dir == 'b')
-  {
-    driveSpeed *= -1;
-  }
-
-  while (abs(frontRight.get_position() + backRight.get_position() + frontLeft.get_position() +
-             backLeft.get_position()) /
-             4 <
-         abs(ticks))
-  {
-    std::cout << "Inside while loop\n";
-    error = ticks - ((frontRight.get_position() + backRight.get_position() + frontLeft.get_position() + backLeft.get_position()) / 4);
-
-    if (driveSpeed > 0 && lastDriveSpeed >= 0 && driveSpeed > lastDriveSpeed)
-    {
-      std::cout << "First if\n";
-      setLeftDrive(lastDriveSpeed + increaseFactor);
-      setRightDrive(lastDriveSpeed + increaseFactor);
-      lastDriveSpeed += increaseFactor;
-    }
-    else if (driveSpeed < 0 && lastDriveSpeed <= 0 && driveSpeed < lastDriveSpeed)
-    {
-      std::cout << "Second if\n";
-      setLeftDrive(lastDriveSpeed - increaseFactor);
-      setRightDrive(lastDriveSpeed - increaseFactor);
-      lastDriveSpeed -= increaseFactor;
-    }
-    else
-    {
-      setLeftDrive(driveSpeed);
-      setRightDrive(driveSpeed);
-      lastDriveSpeed = driveSpeed;
-    }
-  }
-  setRightDrive(0);
-  setLeftDrive(0);
-}
-
-/**
- * Use this function to drive for a certain number of inches
- * minSpeed - The minimum value the drive base can go at
- * Note: Set minSpeed to 0 to leave the deadband at its default
- **/
-void drive(char dir, float inches)
-{
-
-  frontRight.tare_position();
-  backRight.tare_position();
-  frontLeft.tare_position();
-  backLeft.tare_position();
-
-  int ticks = (int)((inches / (pi * WHEEL_RADIUS)) * 180);
-  int angleCorrectionFactor = 40;
-  int startingAngle = globalTargetAngle;
-
-  //P Variables Here//
-  int error = ticks - ((frontRight.get_position() + backRight.get_position() + frontLeft.get_position() + backLeft.get_position()) / 4);
-  float driveSpeed = 0;
-  float lastDriveSpeed = 0;
-  int angleError = 0;
-
-  //Constants here//
-  float kp = 20;
-  float increaseFactor = .1;
-
-  //Tolerance Variables Here//
-  int speedTolerance = 10;
-  int positionTolerance = 30;
-
-  //Deadbands//
-  int speedDeadband = 2500;
-
-  if (dir == 'b')
-  {
-    ticks *= -1;
-  }
-
-  while (abs(error) > positionTolerance ||
-         abs(frontRight.get_actual_velocity()) > speedTolerance ||
-         abs(backRight.get_actual_velocity()) > speedTolerance ||
-         abs(frontLeft.get_actual_velocity()) > speedTolerance ||
-         abs(backLeft.get_actual_velocity()) > speedTolerance)
-  {
-    angleError = startingAngle - gyro.get_value();
-
-    error = ticks - ((frontRight.get_position() + backRight.get_position() + frontLeft.get_position() + backLeft.get_position()) / 4);
-
-    driveSpeed = error * kp;
-
-    if (isBetween(driveSpeed, -1 * speedDeadband, 0))
-    {
-      driveSpeed = -1 * speedDeadband;
-    }
-    if (isBetween(driveSpeed, 0, speedDeadband))
-    {
-      driveSpeed = speedDeadband;
-    }
-
-    /*if (driveSpeed > 0 && driveSpeed > lastDriveSpeed)
-    {
-      float currentSpeed = lastDriveSpeed + increaseFactor;
-      setLeftDrive(currentSpeed);
-      setRightDrive(currentSpeed);
-      lastDriveSpeed = currentSpeed;
-    }
-    else if (driveSpeed < 0 && driveSpeed < lastDriveSpeed)
-    {
-      float currentSpeed = lastDriveSpeed - increaseFactor;
-      setLeftDrive(currentSpeed);
-      setRightDrive(currentSpeed);
-      lastDriveSpeed = currentSpeed;
-    }
-    else
-    {
-      setLeftDrive(driveSpeed);
-      setRightDrive(driveSpeed);
-      lastDriveSpeed = driveSpeed;
-    }*/
-    setLeftDrive(driveSpeed + angleError * angleCorrectionFactor);
-    setRightDrive(driveSpeed - angleError * angleCorrectionFactor);
-  }
-  setRightDrive(0);
-  setLeftDrive(0);
-}
-
 void driveRampUp(char dir, float inches)
 {
 
@@ -342,7 +144,7 @@ void driveRampUp(char dir, float inches)
   frontLeft.tare_position();
   backLeft.tare_position();
 
-  int ticks = (int)((inches / (pi * WHEEL_RADIUS)) * 180);
+  int ticks = (int)((inches / (PI * WHEEL_RADIUS)) * 180);
   int maxAngleCorrectionFactor = 100;
   int angleCorrectionFactor = 40;
   float angleCorrectionFactorD = 2;
