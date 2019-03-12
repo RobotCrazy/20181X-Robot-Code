@@ -2,7 +2,7 @@
 
 double degreeToRadian(double degrees)
 {
-  return 1; //degrees * (PI / 180.0);
+  return degrees * (PI / 180.0);
 }
 
 bool isBetween(float number, float rangeLower, float rangeUpper)

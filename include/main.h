@@ -44,11 +44,10 @@
 //#include "pros/api_legacy.h"
 #include "pros/rtos.hpp"
 #include "mathUtil.h"
-#include "chassis.h"
+#include "subsytems.h"
 
 extern pros::Motor intake;
 extern pros::Motor indexer;
-extern pros::Motor flywheel;
 extern pros::Motor flipper;
 
 extern pros::ADIUltrasonic indexerSonar;
@@ -57,12 +56,6 @@ extern pros::Vision visionSensor;
 extern pros::Controller master;
 
 extern int autoMode;
-extern int targetFlywheelSpeed;
-extern bool maintainFlywheelSpeedRequested;
-extern bool runFlywheelAtVoltageRequested;
-extern int targetFlywheelVoltage;
-extern bool flywheelAutoVelControl;
-extern bool flywheelOnTarget;
 extern char *parameter3;
 extern bool intakeUpRequested; //boolean for state of intake request
 extern bool intakeOutRequested;

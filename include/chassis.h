@@ -17,6 +17,7 @@ extern pros::ADIGyro gyro;
 
 #define WHEEL_RADIUS 2
 #define WHEEL_CIRCUMFERENCE WHEEL_RADIUS * 2 * PI
+#define GYRO_SCALE .78
 
 /*****************************Chassis Movement Global Variables************************************/
 extern int globalTargetAngle;
@@ -24,9 +25,12 @@ extern int globalTargetAngle;
 /********************************Chassis Helper Function Declarations******************************/
 extern void setRightDrive(int voltage);
 extern void setLeftDrive(int voltage);
+extern void setGlobalTargetAngle(int newAngle);
 
 /****************************Chassis Autonomous Movement Functions*********************************/
 extern void drive(char dir, float inches, int driveSpeed);
 extern void drive(char dir, float inches);
+extern void driveRampUp(char dir, float inches);
+extern void turnToTarget(float targetAngle, int maxSpeed);
 
 #endif

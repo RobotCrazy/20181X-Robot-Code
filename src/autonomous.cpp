@@ -1,7 +1,7 @@
 #include "main.h"
 
 double wheelCircumference = (WHEEL_RADIUS * 2 * PI);
-double gyroScale = .78;
+//double gyroScale = .78;
 
 /*pros::vision_signature_s_t REDFLAG;
 pros::vision_signature_s_t BLUEFLAG;
@@ -134,160 +134,6 @@ void alignToFlag()
   pros::lcd::clear();
   setRightDrive(0);
   setLeftDrive(0);
-}
-
-void driveRampUp(char dir, float inches)
-{
-
-  frontRight.tare_position();
-  backRight.tare_position();
-  frontLeft.tare_position();
-  backLeft.tare_position();
-
-  int ticks = (int)((inches / (PI * WHEEL_RADIUS)) * 180);
-  int maxAngleCorrectionFactor = 100;
-  int angleCorrectionFactor = 40;
-  float angleCorrectionFactorD = 2;
-  int startingAngle = globalTargetAngle;
-
-  float percentOfFullSpeed = 0;
-
-  //P Variables Here//
-  int error = ticks - ((frontRight.get_position() + backRight.get_position() + frontLeft.get_position() + backLeft.get_position()) / 4);
-  float driveSpeed = 0;
-  float lastDriveSpeed = 0;
-  int angleError = 0;
-  int lastAngleError = 0;
-
-  //Constants here//
-  float kp = 20;
-  float increaseFactor = .4;
-
-  //Tolerance Variables Here//
-  int speedTolerance = 10;
-  int positionTolerance = 30;
-
-  //Deadbands//
-  int speedDeadband = 2500;
-
-  if (dir == 'b')
-  {
-    ticks *= -1;
-  }
-
-  while (abs(error) > positionTolerance ||
-         abs(frontRight.get_actual_velocity()) > speedTolerance ||
-         abs(backRight.get_actual_velocity()) > speedTolerance ||
-         abs(frontLeft.get_actual_velocity()) > speedTolerance ||
-         abs(backLeft.get_actual_velocity()) > speedTolerance)
-  {
-    angleError = startingAngle - gyro.get_value();
-
-    error = ticks - ((frontRight.get_position() + backRight.get_position() + frontLeft.get_position() + backLeft.get_position()) / 4);
-
-    driveSpeed = error * kp;
-
-    if (isBetween(driveSpeed, -1 * speedDeadband, 0))
-    {
-      driveSpeed = -1 * speedDeadband;
-    }
-    if (isBetween(driveSpeed, 0, speedDeadband))
-    {
-      driveSpeed = speedDeadband;
-    }
-
-    if (driveSpeed > 0 && lastDriveSpeed >= 0 && driveSpeed > lastDriveSpeed)
-    {
-      std::cout << "First if\n";
-      setLeftDrive(lastDriveSpeed + increaseFactor + ((angleError * angleCorrectionFactor) + ((angleError - lastAngleError) * angleCorrectionFactorD)));
-      setRightDrive(lastDriveSpeed + increaseFactor - ((angleError * angleCorrectionFactor) + ((angleError - lastAngleError) * angleCorrectionFactorD)));
-      lastDriveSpeed += increaseFactor;
-    }
-    else if (driveSpeed < 0 && lastDriveSpeed <= 0 && driveSpeed < lastDriveSpeed)
-    {
-      std::cout << "Second if\n";
-      setLeftDrive(lastDriveSpeed - increaseFactor + ((angleError * angleCorrectionFactor) + ((angleError - lastAngleError) * angleCorrectionFactorD)));
-      setRightDrive(lastDriveSpeed - increaseFactor - ((angleError * angleCorrectionFactor) + ((angleError - lastAngleError) * angleCorrectionFactorD)));
-      lastDriveSpeed -= increaseFactor;
-    }
-    else
-    {
-      setLeftDrive(driveSpeed + ((angleError * angleCorrectionFactor) + ((angleError - lastAngleError) * angleCorrectionFactorD)));
-      setRightDrive(driveSpeed - ((angleError * angleCorrectionFactor) + ((angleError - lastAngleError) * angleCorrectionFactorD)));
-      lastDriveSpeed = driveSpeed;
-    }
-
-    //percentOfFullSpeed = driveSpeed / 12000.0;
-    //angleCorrectionFactor = maxAngleCorrectionFactor * (1.0 - percentOfFullSpeed);
-    //This is an alternate solution.  Try this if the D term does not work, or try it with the D term.
-    lastAngleError = angleError;
-  }
-  setRightDrive(0);
-  setLeftDrive(0);
-}
-
-void driveTime(char dir, int milliseconds, int topSpeed)
-{
-  int currentTime = pros::millis();
-  if (dir == 'b')
-  {
-    topSpeed *= -1;
-  }
-
-  frontRight.move_voltage(topSpeed);
-  backRight.move_voltage(topSpeed);
-  frontLeft.move_voltage(topSpeed);
-  backLeft.move_voltage(topSpeed);
-
-  while (abs(pros::millis() - currentTime) < milliseconds)
-  {
-    pros::delay(2);
-  }
-  frontRight.move_voltage(0);
-  backRight.move_voltage(0);
-  frontLeft.move_voltage(0);
-  backLeft.move_voltage(0);
-}
-
-bool flywheelAutoVelControl = false;
-
-void setFlywheelVoltage(int voltage)
-{
-  targetFlywheelVoltage = voltage;
-}
-void startFlywheelVoltage(int voltage)
-{
-  maintainFlywheelSpeedRequested = false;
-  flywheelAutoVelControl = false;
-  runFlywheelAtVoltageRequested = true;
-  setFlywheelVoltage(voltage);
-}
-void startFlywheel(int targetSpeed)
-{
-  maintainFlywheelSpeedRequested = true;
-  flywheelAutoVelControl = false;
-  targetFlywheelSpeed = targetSpeed;
-}
-void startFlywheelAutoVelControl(int targetSpeed)
-{
-  maintainFlywheelSpeedRequested = false;
-  flywheelAutoVelControl = true;
-  targetFlywheelSpeed = targetSpeed;
-}
-void startFlywheel(int voltage, int targetSpeed)
-{
-  maintainFlywheelSpeedRequested = true;
-  targetFlywheelSpeed = targetSpeed;
-  flywheel.move_voltage(voltage);
-}
-
-void stopFlywheel()
-{
-  maintainFlywheelSpeedRequested = false;
-  flywheelAutoVelControl = false;
-  runFlywheelAtVoltageRequested = false;
-  targetFlywheelSpeed = 0;
-  targetFlywheelVoltage = 0;
 }
 
 void startIntake()
@@ -474,47 +320,6 @@ void turn(char dir, int degrees, int topSpeed, bool waitForCompletion)
       pros::delay(2);
     }
   }
-}
-
-void setGlobalTargetAngle(int newAngle)
-{
-  globalTargetAngle = (newAngle * gyroScale * 10);
-}
-
-void turnToTarget(float targetAngle, int maxSpeed)
-{
-  float kp = 20;
-  float scaledAngle = targetAngle * gyroScale;
-  globalTargetAngle = scaledAngle * 10;
-  int error = (scaledAngle * 10.0) - gyro.get_value();
-  int driveSpeed = error * kp;
-  int tolerance = 10;
-  int speedTolerance = 5;
-
-  while (abs(error) > tolerance ||
-         frontRight.get_actual_velocity() > speedTolerance ||
-         backRight.get_actual_velocity() > speedTolerance ||
-         frontLeft.get_actual_velocity() > speedTolerance ||
-         backLeft.get_actual_velocity() > speedTolerance)
-  {
-    if (isBetween(driveSpeed, -2000, 0))
-    {
-      driveSpeed = -2000;
-    }
-    if (isBetween(driveSpeed, 0, 2000))
-    {
-      driveSpeed = 2000;
-    }
-
-    setRightDrive(driveSpeed * -1);
-    setLeftDrive(driveSpeed);
-
-    error = (scaledAngle * 10) - gyro.get_value();
-    driveSpeed = error * kp;
-  }
-  pros::lcd::print(5, "Done turning");
-  setRightDrive(0);
-  setLeftDrive(0);
 }
 
 /**

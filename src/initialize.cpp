@@ -1,7 +1,6 @@
 #include "main.h"
 
 #define INTAKE_PORT 12
-#define FLY_WHEEL 14
 #define CAP_FLIPPER 9
 #define INDEXER_PORT 19
 #define VISION_SENSOR_PORT 13
@@ -11,7 +10,6 @@
 #define INTAKE_SONAR_PORT_ECHO 'D'
 
 pros::Motor intake(INTAKE_PORT);
-pros::Motor flywheel(FLY_WHEEL);
 pros::Motor flipper(CAP_FLIPPER);
 pros::Motor indexer(INDEXER_PORT, true);
 pros::ADIUltrasonic indexerSonar(INDEXER_SONAR_PORT_PING, INDEXER_SONAR_PORT_ECHO);
@@ -113,11 +111,6 @@ void monitorIntake(void *param)
 	}
 }
 
-int targetFlywheelSpeed = 0;
-bool maintainFlywheelSpeedRequested = false;
-bool runFlywheelAtVoltageRequested = false;
-int targetFlywheelVoltage = 0;
-bool flywheelOnTarget = false;
 char *parameter3;
 float currentFlywheelVoltage = 0;
 
