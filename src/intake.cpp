@@ -13,6 +13,31 @@ bool prepareShotRequested = false;
 bool shootBallRequested = false;
 int targetShootingTicks = 0;
 
+/*************************************Intake status functions************************************/
+void startIntake()
+{
+  intakeUpRequested = true;
+  prepareShotRequested = false;
+  shootBallRequested = false;
+  intakeOutRequested = false;
+}
+
+void startIntakeOut()
+{
+  intakeUpRequested = false;
+  prepareShotRequested = false;
+  shootBallRequested = false;
+  intakeOutRequested = true;
+}
+
+void stopIntake()
+{
+  intakeUpRequested = false;
+  prepareShotRequested = false;
+  shootBallRequested = false;
+  intakeOutRequested = false;
+}
+
 /********************************Intake status handling task************************************/
 char *parameter2;
 void monitorIntake(void *param)
@@ -74,3 +99,21 @@ void monitorIntake(void *param)
 }
 
 pros::Task intakeMonitor(monitorIntake, parameter2, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Intake auto movement task");
+
+/*********************************Intake autonomous movement*********************************/
+void runIntake(char dir, int ticks, bool waitForCompletion)
+{
+  if (dir == 'u')
+  { //u is up, d is down
+    ticks *= -1;
+  }
+  int originalPos = intake.get_position();
+  intake.move_relative(ticks, 200);
+  if (waitForCompletion)
+  {
+    while (abs(intake.get_position() - originalPos) < abs(ticks) - 5)
+    {
+      pros::delay(2);
+    }
+  }
+}

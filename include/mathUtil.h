@@ -3,7 +3,7 @@
 
 #define PI atan(1) * 4
 
-double degreeToRadian(double degrees);
-bool isBetween(float number, float rangeLower, float rangeUpper);
+extern double degreeToRadian(double degrees);
+extern bool isBetween(float number, float rangeLower, float rangeUpper);
 
 #endif

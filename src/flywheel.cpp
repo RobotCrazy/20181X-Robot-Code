@@ -1,13 +1,14 @@
 #include "flywheel.h"
+#include "main.h"
 
-pros::Motor flywheel(FLY_WHEEL);
+pros::Motor flywheel(FLY_WHEEL_PORT);
 
 /******************************Flywheel Status Global Variables*******************************/
 int targetFlywheelSpeed = 0;
 int targetFlywheelVoltage = 0;
 bool maintainFlywheelSpeedRequested = false;
 bool runFlywheelAtVoltageRequested = false;
-bool autoVelControl = false;
+bool flywheelAutoVelControl = false;
 bool flywheelOnTarget = false;
 
 /*****************************Flywheel Velocity Control Variables*****************************/
@@ -51,6 +52,11 @@ void stopFlywheel()
   runFlywheelAtVoltageRequested = false;
   targetFlywheelSpeed = 0;
   targetFlywheelVoltage = 0;
+}
+
+void setFlywheelTargetSpeed(int speed)
+{
+  targetFlywheelSpeed = speed;
 }
 
 /************************************Flywheel Velocity Control Functions*************************/
@@ -297,5 +303,72 @@ void maintainFlywheelSpeed(void *param)
       flywheelOnTarget = false;
     }
     pros::delay(20);
+  }
+}
+
+/***************************************Flywhel Status Control Task*******************************/
+pros::Task flywheelRPMMonitor(maintainFlywheelSpeed, parameter3, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Flywheel speed task");
+
+/********************************Flywheel Autonomous Movement***********************************/
+/**
+ * This function shoots the ball by spinning the indexer once the flywheel velocity
+ * is greater than or equal to the required speed
+ * requiredSpeed - The required speed at which the flywheel must shoot
+ * intakeTicks - The number of ticks that the indexer must rotate to shoot the ball
+ * stopFlywheelOnFinish - A boolean representing whether to shut off the flywheel after
+ * shooting
+ *    Pass true to shut off flywheel after shooting
+ *    Pass false to allow the flywheel to continue running
+ **/
+void shootWhenReady(int requiredSpeed, int intakeTicks, bool stopFlywheelOnFinish)
+{
+  if (flywheelAutoVelControl == true)
+  {
+    while (flywheel.get_actual_velocity() < requiredSpeed ||
+           flywheel.get_actual_velocity() > requiredSpeed > 5)
+    {
+      pros::delay(2);
+    }
+  }
+  else
+  {
+    while (flywheel.get_actual_velocity() < requiredSpeed)
+    {
+      pros::delay(2);
+    }
+  }
+  intakeMonitor.suspend();
+  indexer.move_relative(intakeTicks, 200);
+  pros::delay(500);
+  intakeMonitor.resume();
+  if (stopFlywheelOnFinish)
+  {
+    stopFlywheel();
+  }
+}
+
+/**
+ * This function shoots the ball by spinning the indexer once the flywheel speed monitor has 
+ * determined that the speed is correct.
+ * intakeTicks - The number of ticks that the indexer must rotate to shoot the ball
+ * stopFlywheelOnFinish - A boolean representing whether to shut off the flywheel after
+ * shooting
+ *    Pass true to shut off flywheel after shooting
+ *    Pass false to allow the flywheel to continue running
+ **/
+void shootWhenReady(int intakeTicks, bool stopFlywheelOnFinish)
+{
+  while (flywheelOnTarget == false)
+  {
+    pros::delay(2);
+  }
+  pros::lcd::print(4, "Speed: %d", flywheel.get_actual_velocity());
+  intakeMonitor.suspend();
+  indexer.move_relative(intakeTicks, 200);
+  pros::delay(500);
+  intakeMonitor.resume();
+  if (stopFlywheelOnFinish)
+  {
+    stopFlywheel();
   }
 }

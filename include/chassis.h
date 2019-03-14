@@ -35,4 +35,7 @@ extern void driveRampUp(char dir, float inches);
 extern void driveShootAsync(char dir, float inches, int distance1, int distance2);
 extern void turnToTarget(float targetAngle, int maxSpeed);
 
+/****************************Chassis General Functions**********************************/
+extern void holdDrivePos(int targetPosL, int targetPosR);
+
 #endif

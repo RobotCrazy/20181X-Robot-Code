@@ -373,3 +373,74 @@ void turnToTarget(float targetAngle, int maxSpeed)
   setRightDrive(0);
   setLeftDrive(0);
 }
+
+/**
+ * This function turns a certain number of degrees using the encoders on the drive base
+ * dir - The direction to turn as a character
+ *   'r' will turn right
+ *   'l' will turn left
+ * degrees - An integer for the number of degrees the base should turn
+ * topSpeed - The maximum speed the turn is permitted to move with
+ * waitForCompletion - A boolean representing whether to block the program while executing
+ *   true will wait for the turn to finish before moving on
+ *   false will allow the program to continue moving
+ */
+void turn(char dir, int degrees, int topSpeed, bool waitForCompletion)
+{
+  double radianAngle = degreeToRadian(degrees);
+  double requiredArcInches = 13.4 * radianAngle; //S in formula
+  double rotationAmountPerWheel = (requiredArcInches / wheelCircumference) / 2.0;
+  int encoderDegrees = (int)(rotationAmountPerWheel * 360.0);
+
+  int fRStartingPos = frontRight.get_position();
+  int bRStartingPos = backRight.get_position();
+  int fLStartingPos = frontLeft.get_position();
+  int bLStartingPos = backLeft.get_position();
+
+  int tolerance = 50;
+
+  if (dir == 'r')
+  {
+    frontLeft.move_relative(encoderDegrees, topSpeed);
+    backLeft.move_relative(encoderDegrees, topSpeed);
+    frontRight.move_relative(encoderDegrees * -1, -1 * topSpeed);
+    backRight.move_relative(encoderDegrees * -1, -1 * topSpeed);
+  }
+  else
+  {
+    frontLeft.move_relative(encoderDegrees * -1, -1 * topSpeed);
+    backLeft.move_relative(encoderDegrees * -1, -1 * topSpeed);
+    frontRight.move_relative(encoderDegrees, topSpeed);
+    backRight.move_relative(encoderDegrees, topSpeed);
+  }
+
+  if (waitForCompletion)
+  {
+    while (abs(frontRight.get_position() - fRStartingPos) <= abs(encoderDegrees) - tolerance || abs(backRight.get_position() - bRStartingPos) <= abs(encoderDegrees) - tolerance || abs(frontLeft.get_position() - fLStartingPos) <= abs(encoderDegrees) - tolerance || abs(backLeft.get_position() - bLStartingPos) <= abs(encoderDegrees) - 500)
+    {
+      pros::delay(2);
+    }
+  }
+}
+
+/****************************Chassis General Functions**********************************/
+void holdDrivePos(int targetPosL, int targetPosR)
+{
+  float kp = 80;
+  int tolerance = 3;
+  float currentPosL = (frontLeft.get_position() + backLeft.get_position()) / 2;
+  float currentPosR = (frontRight.get_position() + backRight.get_position()) / 2;
+  float errorL = targetPosL - currentPosL;
+  float errorR = targetPosR - currentPosR;
+
+  if (abs(errorL) > tolerance || abs(errorR) > tolerance)
+  {
+    setLeftDrive(errorL * kp);
+    setRightDrive(errorR * kp);
+  }
+  else
+  {
+    setLeftDrive(0);
+    setRightDrive(0);
+  }
+}

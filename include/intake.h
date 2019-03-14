@@ -20,8 +20,16 @@ extern bool intakeUpRequested; //boolean for state of intake request
 extern bool intakeOutRequested;
 extern bool prepareShotRequested;
 
+/*************************************Intake status functions************************************/
+extern void startIntake();
+extern void startIntakeOut();
+extern void stopIntake();
+
 /********************************Intake status handling task***************************************/
 extern void monitorIntake(void *param);
 extern pros::Task intakeMonitor;
+
+/*********************************Intake autonomous movement*********************************/
+void runIntake(char dir, int ticks, bool waitForCompletion);
 
 #endif

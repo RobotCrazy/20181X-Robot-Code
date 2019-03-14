@@ -80,9 +80,6 @@ void maintainFlywheelSpeed(void *param)
 	}
 }*/
 
-pros::Task flywheelRPMMonitor(maintainFlywheelSpeed, parameter3, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Flywheel speed task");
-pros::Task intakeMonitor(monitorIntake, parameter2, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Intake auto movement task");
-
 /**
  * Runs initialization code. This occurs as soon as the program is started.
  *

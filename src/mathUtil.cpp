@@ -1,4 +1,5 @@
 #include "mathUtil.h"
+#include <cmath>
 
 double degreeToRadian(double degrees)
 {

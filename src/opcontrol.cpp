@@ -38,27 +38,6 @@ void holdFlipper(char *param)
 	}
 }
 
-void holdDrivePos(int targetPosL, int targetPosR)
-{
-	float kp = 80;
-	int tolerance = 3;
-	float currentPosL = (frontLeft.get_position() + backLeft.get_position()) / 2;
-	float currentPosR = (frontRight.get_position() + backRight.get_position()) / 2;
-	float errorL = targetPosL - currentPosL;
-	float errorR = targetPosR - currentPosR;
-
-	if (abs(errorL) > tolerance || abs(errorR) > tolerance)
-	{
-		setLeftDrive(errorL * kp);
-		setRightDrive(errorR * kp);
-	}
-	else
-	{
-		setLeftDrive(0);
-		setRightDrive(0);
-	}
-}
-
 /*bool maintainFlywheelSpeedRequested = false;
 bool flywheelOnTarget = false;
 bool doingFirstShot = true;
