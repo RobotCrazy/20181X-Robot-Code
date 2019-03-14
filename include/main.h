@@ -44,14 +44,10 @@
 //#include "pros/api_legacy.h"
 #include "pros/rtos.hpp"
 #include "mathUtil.h"
-#include "subsytems.h"
+#include "subsystems.h"
 
-extern pros::Motor intake;
-extern pros::Motor indexer;
 extern pros::Motor flipper;
 
-extern pros::ADIUltrasonic indexerSonar;
-extern pros::ADIUltrasonic intakeSonar;
 extern pros::Vision visionSensor;
 extern pros::Controller master;
 

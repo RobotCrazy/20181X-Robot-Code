@@ -3,5 +3,6 @@
 
 #include "chassis.h"
 #include "flywheel.h"
+#include "intake.h"
 
 #endif

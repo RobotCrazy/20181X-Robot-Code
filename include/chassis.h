@@ -21,6 +21,7 @@ extern pros::ADIGyro gyro;
 
 /*****************************Chassis Movement Global Variables************************************/
 extern int globalTargetAngle;
+extern double wheelCircumference;
 
 /********************************Chassis Helper Function Declarations******************************/
 extern void setRightDrive(int voltage);
@@ -31,6 +32,7 @@ extern void setGlobalTargetAngle(int newAngle);
 extern void drive(char dir, float inches, int driveSpeed);
 extern void drive(char dir, float inches);
 extern void driveRampUp(char dir, float inches);
+extern void driveShootAsync(char dir, float inches, int distance1, int distance2);
 extern void turnToTarget(float targetAngle, int maxSpeed);
 
 #endif

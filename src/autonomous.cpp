@@ -1,6 +1,5 @@
 #include "main.h"
 
-double wheelCircumference = (WHEEL_RADIUS * 2 * PI);
 //double gyroScale = .78;
 
 /*pros::vision_signature_s_t REDFLAG;
@@ -32,75 +31,6 @@ visionSensor.set_signature(2, &BLUEFLAG);
 /*pros::vision_signature_s_t BLUEFLAG = {1, {1, 0, 0}, 2.600, -4321, -2115, -3218, 7633, 13239, 10436, 0, 0};
 pros::vision_signature_s_t REDFLAG = {2, {1, 0, 0}, 3.400, 10269, 14613, 12441, -1509, -231, -870, 0, 0};
 */
-
-/**
- * A function that travels a given number of inches and shoots twice during the movement
- * dir - 'f' for forwards; 'b' - for backwards
- * inches - total distance to travel in inches
- * distance1 - Distance from starting point to first shot
- * distance2 - Distance from starting point to second shot
- **/
-void driveShootAsync(char dir, float inches, int distance1, int distance2)
-{
-  frontRight.tare_position();
-  backRight.tare_position();
-  frontLeft.tare_position();
-  backLeft.tare_position();
-
-  int ticks = (int)((inches / (PI * WHEEL_RADIUS)) * 180);
-  int angleCorrectionFactor = 60;
-  int startingAngle = globalTargetAngle;
-  int traveledDistance = 0;
-
-  //P Variables Here//
-  int error = ticks - ((frontRight.get_position() + backRight.get_position() + frontLeft.get_position() + backLeft.get_position()) / 4);
-  int driveSpeed = 5000;
-  int angleError = 0;
-
-  //Constants here//
-  float kp = 20;
-  float increaseFactor = .1;
-
-  //Tolerance Variables Here//
-  int speedTolerance = 10;
-  int positionTolerance = 30;
-
-  //Deadbands//
-  int speedDeadband = 2500;
-
-  if (dir == 'b')
-  {
-    ticks *= -1;
-  }
-
-  while (abs(error) > positionTolerance ||
-         abs(frontRight.get_actual_velocity()) > speedTolerance ||
-         abs(backRight.get_actual_velocity()) > speedTolerance ||
-         abs(frontLeft.get_actual_velocity()) > speedTolerance ||
-         abs(backLeft.get_actual_velocity()) > speedTolerance)
-  {
-    angleError = startingAngle - gyro.get_value();
-    traveledDistance = ((frontRight.get_position() + backRight.get_position() + frontLeft.get_position() + backLeft.get_position()) / 4);
-
-    error = ticks - traveledDistance;
-
-    setLeftDrive(driveSpeed + angleError * angleCorrectionFactor);
-    setRightDrive(driveSpeed - angleError * angleCorrectionFactor);
-    if (isBetween(traveledDistance, distance1 - 100, distance2 + 100) || isBetween(traveledDistance, distance2 - 100, distance2 + 100))
-    {
-      intakeMonitor.suspend();
-      indexer.move_voltage(12000);
-    }
-    else
-    {
-      indexer.move_voltage(0);
-      intakeMonitor.resume();
-    }
-    pros::delay(5);
-  }
-  setRightDrive(0);
-  setLeftDrive(0);
-}
 
 void alignToFlag()
 {

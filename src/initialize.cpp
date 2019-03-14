@@ -1,19 +1,10 @@
 #include "main.h"
 
-#define INTAKE_PORT 12
 #define CAP_FLIPPER 9
-#define INDEXER_PORT 19
 #define VISION_SENSOR_PORT 13
-#define INDEXER_SONAR_PORT_PING 'A'
-#define INDEXER_SONAR_PORT_ECHO 'B'
-#define INTAKE_SONAR_PORT_PING 'C'
-#define INTAKE_SONAR_PORT_ECHO 'D'
 
-pros::Motor intake(INTAKE_PORT);
 pros::Motor flipper(CAP_FLIPPER);
-pros::Motor indexer(INDEXER_PORT, true);
-pros::ADIUltrasonic indexerSonar(INDEXER_SONAR_PORT_PING, INDEXER_SONAR_PORT_ECHO);
-pros::ADIUltrasonic intakeSonar(INTAKE_SONAR_PORT_PING, INTAKE_SONAR_PORT_ECHO);
+
 pros::Vision visionSensor(VISION_SENSOR_PORT);
 
 bool readyToExitAutoSelector = false;
@@ -47,315 +38,6 @@ void incrementAutoMode()
 	}
 }
 
-bool intakeUpRequested = false; //boolean for state of intake request
-bool intakeOutRequested = false;
-bool prepareShotRequested = false;
-char *parameter2;
-int targetShootingTicks = 0;
-bool shootBallRequested = false;
-void monitorIntake(void *param)
-{
-	while (true)
-	{
-		if (intakeUpRequested == true)
-		{
-			if (!(isBetween(indexerSonar.get_value(), 50, 80)))
-			{
-				intake.move_velocity(150);
-				indexer.move_velocity(200);
-			}
-			else if (!(isBetween(intakeSonar.get_value(), 30, 80)))
-			{
-				intake.move_velocity(150);
-				indexer.move_velocity(0);
-			}
-			else
-			{
-				indexer.move_velocity(0);
-				intake.move_velocity(0);
-				intake.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_BRAKE);
-				indexer.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_BRAKE);
-			}
-		}
-		else if (prepareShotRequested == true)
-		{
-			if (!(isBetween(indexerSonar.get_value(), 50, 80)))
-			{
-				intake.move_velocity(150);
-				indexer.move_velocity(200);
-			}
-			else
-			{
-				intake.move_velocity(0);
-				indexer.move_velocity(0);
-				indexer.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_BRAKE);
-			}
-		}
-		else if (intakeOutRequested == true)
-		{
-			intake.move_velocity(-200);
-			indexer.move_velocity(0);
-			indexer.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_BRAKE);
-		}
-		else if (shootBallRequested == true)
-		{
-			intake.move_relative(targetShootingTicks, 200);
-		}
-		else
-		{
-			intake.move_velocity(0);
-			indexer.move_velocity(0);
-			indexer.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_BRAKE);
-		}
-		pros::delay(5);
-	}
-}
-
-char *parameter3;
-float currentFlywheelVoltage = 0;
-
-float determineFlywheelVoltage(float targetVelocity)
-{
-	float voltage = ((0.6676889314051 * targetVelocity) - 7.03063980643);
-
-	if (voltage > 127)
-	{
-		voltage = 127;
-	}
-	else if (voltage < 0)
-	{
-		voltage = 0;
-	}
-	else
-	{
-		return voltage;
-	}
-}
-void maintainFlywheelSpeed(void *param)
-{
-
-	//Constants//
-	float kp = .3;
-	float ki = 0;
-	float kd = 0;
-
-	//PID Variables Here//
-	float currentVelocity = flywheel.get_actual_velocity();
-	float lastVelocity1 = 0;
-	float lastVelocity2 = 0;
-	float lastVelocity3 = 0;
-	float averageVelocity = 0;
-	float error = targetFlywheelSpeed - currentVelocity;
-	int lastError = 0;
-	int totalError = 0;
-	int integralActiveZone = 8;
-
-	int onTargetCount = 0;
-	float finalAdjustment = error * kp; //add the rest of PID to this calculation
-
-	//Temp Variable//
-	int deltaTime = 0;
-
-	while (true)
-	{
-		if (maintainFlywheelSpeedRequested == true)
-		{
-			currentVelocity = flywheel.get_actual_velocity();
-			averageVelocity = ((currentVelocity + currentVelocity + lastVelocity1 +
-													lastVelocity2 + lastVelocity3) /
-												 5);
-			error = targetFlywheelSpeed - averageVelocity;
-
-			if (error < -2 || error > 17)
-			{
-				currentFlywheelVoltage = determineFlywheelVoltage(targetFlywheelSpeed);
-			}
-			else
-			{
-				finalAdjustment = (error * kp) + (totalError * ki);
-				currentFlywheelVoltage += finalAdjustment;
-				if (abs(error) > integralActiveZone && error != 0)
-				{
-					totalError += error;
-				}
-				else
-				{
-					totalError = 0;
-				}
-			}
-			lastVelocity3 = lastVelocity2;
-			lastVelocity2 = lastVelocity1;
-			lastVelocity1 = currentVelocity;
-
-			if (currentFlywheelVoltage > 127)
-			{
-				currentFlywheelVoltage = 127;
-			}
-			else if (currentFlywheelVoltage < 0)
-			{
-				currentFlywheelVoltage = 0;
-			}
-
-			flywheel.move(currentFlywheelVoltage);
-
-			if (abs(error) < 4)
-			{
-				onTargetCount++;
-			}
-			else
-			{
-				onTargetCount = 0;
-				flywheelOnTarget = false;
-			}
-			if (onTargetCount >= 50)
-			{
-				flywheelOnTarget = true;
-			}
-			else
-			{
-				flywheelOnTarget = false;
-			}
-
-			if (deltaTime >= 100)
-			{
-				std::cout << "Avg:" << averageVelocity << "\n";
-				deltaTime = 0;
-			}
-			else
-			{
-				deltaTime += 20;
-			}
-
-			/*if (deltaTime >= 100)
-			{
-				std::cout << " " << averageVelocity << "\n";
-				std::cout << "Flywheel Voltage: " << currentFlywheelVoltage << "\n";
-				deltaTime = 0;
-			}
-			else
-			{
-				deltaTime += 20;
-			}*/
-
-			/*currentVelocity = flywheel.get_actual_velocity();
-			averageVelocity = ((currentVelocity + currentVelocity + lastVelocity1 +
-													lastVelocity2 + lastVelocity3) /
-												 5);
-
-			error = targetFlywheelSpeed - averageVelocity;
-
-			if (abs(error) < integralActiveZone && error != 0)
-			{
-				totalError += error;
-				if (totalError > 10 / ki)
-				{
-					totalError = 10 / ki;
-				}
-			}
-			else
-			{
-				totalError = 0;
-			}
-			//Try printing out error - lastError value to see how much effect the D term is having
-			//The loop is running so fast that error and lastError might usually be equal so the D term isn't
-			//having any effect
-
-			finalAdjustment = ((error * kp) + (totalError * ki) + ((error - lastError) * kd)); //add the rest of PID to this calculation
-			if (abs(error) > 4)
-			{
-				currentFlywheelVoltage += finalAdjustment;
-			}
-
-			if (currentFlywheelVoltage > 127)
-			{
-				currentFlywheelVoltage = 127;
-			}
-			else if (currentFlywheelVoltage < 0)
-			{
-				currentFlywheelVoltage = 0;
-			}
-
-			flywheel.move(currentFlywheelVoltage);
-
-			if (abs(error) < 6)
-			{
-				onTargetCount++;
-			}
-			else
-			{
-				std::cout << onTargetCount << "\n";
-				onTargetCount = 0;
-				flywheelOnTarget = false;
-			}
-			if (onTargetCount >= 35)
-			{
-				flywheelOnTarget = true;
-				std::cout << "True" << onTargetCount << "\n";
-			}
-			else
-			{
-				flywheelOnTarget = false;
-			}
-			if (deltaTime >= 100)
-			{
-				/*std::cout << " " << error << "\n";
-				std::cout << "Flywheel Voltage: " << currentFlywheelVoltage << "\n";
-			deltaTime = 0;
-		}
-		else
-		{
-			deltaTime += 20;
-		}
-		lastError = error;
-		lastVelocity3 = lastVelocity2;
-		lastVelocity2 = lastVelocity1;
-		lastVelocity1 = currentVelocity;
-		* /
-	}
-	else if (flywheelAutoVelControl == true)
-	{
-		//pros::motor_pid_s_t flywheelPID = pros::Motor::convert_pid(0, 4.75, .0001, 1.8);
-		pros::motor_pid_s_t flywheelPID = pros::Motor::convert_pid(.0000001, .0000000000001, .000001, 25);
-		flywheel.set_vel_pid(flywheelPID);
-		flywheel.move_velocity(targetFlywheelSpeed);
-		std::cout << flywheel.get_vel_pid().kp << "\n";
-		error = targetFlywheelSpeed - flywheel.get_actual_velocity();
-		if (deltaTime >= 100)
-		{
-			//std::cout << flywheel.get_actual_velocity() << "\n";
-			deltaTime = 0;
-		}
-		else
-		{
-			deltaTime += 2;
-		}
-		/*if (error 
-			{
-				onTargetCount++;
-			}
-			else
-			{
-				onTargetCount = 0;
-				flywheelOnTarget = false;
-			}
-			if (onTargetCount >= 175)
-			{
-				flywheelOnTarget = true;
-			}*/
-			//std::cout << flywheel.get_actual_velocity() << "\n";
-		}
-		else if (runFlywheelAtVoltageRequested == true)
-		{
-			flywheel.move_voltage(targetFlywheelVoltage);
-		}
-		else
-		{
-			flywheel.move_voltage(0);
-			flywheelOnTarget = false;
-		}
-		pros::delay(20);
-	}
-}
 /*
 int targetFlywheelSpeed = 0;
 bool maintainFlywheelSpeedRequested = false;
@@ -418,11 +100,12 @@ void initialize()
 	intake.set_encoder_units(pros::E_MOTOR_ENCODER_DEGREES);
 	flywheel.set_encoder_units(pros::E_MOTOR_ENCODER_DEGREES);
 	flipper.set_encoder_units(pros::E_MOTOR_ENCODER_DEGREES);
-	pros::Controller master(CONTROLLER_MASTER);
 
 	flipper.tare_position();
 	visionSensor.clear_led();
 	flywheel.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_COAST);
+
+	pros::Controller master(CONTROLLER_MASTER);
 }
 
 /**
@@ -433,16 +116,6 @@ void initialize()
 void disabled()
 {
 }
-
-/**
- * Runs after initialize(), and before autonomous when connected to the Field
- * Management System or the VEX Competition Switch. This is intended for
- * competition-specific initialization routines, such as an autonomous selector
- * on the LCD.
- *
- * This task will exit when the robot is enabled and autonomous or opcontrol
- * starts.
- */
 
 int autoMode = 1;
 pros::Controller master(CONTROLLER_MASTER);
@@ -508,6 +181,15 @@ void autonSelector()
 	pros::lcd::shutdown();
 }
 
+/**
+ * Runs after initialize(), and before autonomous when connected to the Field
+ * Management System or the VEX Competition Switch. This is intended for
+ * competition-specific initialization routines, such as an autonomous selector
+ * on the LCD.
+ *
+ * This task will exit when the robot is enabled and autonomous or opcontrol
+ * starts.
+ */
 void competition_initialize()
 {
 	autonSelector();
