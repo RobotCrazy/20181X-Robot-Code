@@ -14,58 +14,39 @@
  * task, not resume it from where it left off.
  */
 
-#define FRONT_LEFT_PORT 4
-#define BACK_LEFT_PORT 7
-#define FRONT_RIGHT_PORT 6
-#define BACK_RIGHT_PORT 5
-#define INTAKE_PORT 12
-#define FLY_WHEEL 14
-#define CAP_FLIPPER 9
-#define INDEXER_PORT 19
-#define BALL_SONAR_PORT_PING 'A'
-#define BALL_SONAR_PORT_ECHO 'B'
-#define GYRO_PORT 'D'
-
-pros::Motor frontLeft(FRONT_LEFT_PORT);
-pros::Motor backLeft(BACK_LEFT_PORT);
-pros::Motor frontRight(FRONT_RIGHT_PORT, true);
-pros::Motor backRight(BACK_RIGHT_PORT, true);
-pros::Motor intake(INTAKE_PORT);
-pros::Motor flywheel(FLY_WHEEL);
-pros::Motor flipper(CAP_FLIPPER);
-pros::Motor indexer(INDEXER_PORT, true);
-pros::ADIUltrasonic ballSonar(BALL_SONAR_PORT_PING, BALL_SONAR_PORT_ECHO);
-pros::ADIGyro gyro(GYRO_PORT);
-
 /**************Define important variables here***************************/
 bool holdFlipperRequested = false;
+int targetFlipperPos = 0;
 bool flywheelRPMDropped = false;
 
-void holdFlipper(int pos)
+void holdFlipper(char *param)
 {
+	float kp = 5;
 	if (holdFlipperRequested == true)
 	{
-		int error = flipper.get_position() - pos;
+		int error = targetFlipperPos - flipper.get_position();
 
-		if (error > 10)
+		if (error > 4)
 		{
-			flipper.move_relative(error, 200);
+			flipper.move(error * kp);
 		}
 		else
 		{
-			flipper.set_brake_mode(pros::motor_brake_mode_e::E_MOTOR_BRAKE_HOLD);
+			flipper.move(0);
+			flipper.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_HOLD);
 		}
 	}
 }
 
-bool maintainFlywheelSpeedRequested = false;
+/*bool maintainFlywheelSpeedRequested = false;
 bool flywheelOnTarget = false;
 bool doingFirstShot = true;
 int targetFlywheelSpeed = 0;
+
 void detectFlywheelSpeedDrop()
 {
 	int currentSpeed = flywheel.get_actual_velocity();
-	if (flywheelOnTarget == true && currentSpeed - targetFlywheelSpeed > 10)
+	if (flywheelOnTarget == true && targetFlywheelSpeed - currentSpeed > 10)
 	{
 		targetFlywheelSpeed = 150;
 		doingFirstShot = false;
@@ -109,21 +90,39 @@ void maintainFlywheelSpeed(void *param)
 		}
 		detectFlywheelSpeedDrop();
 	}
+}*/
+
+int targetDriveBasePosL = 0;
+int targetDriveBasePosR = 0;
+bool driveBaseTargetSet = false;
+void setTargetDriveBasePos()
+{
+	targetDriveBasePosR = (frontRight.get_position() + backRight.get_position()) / 2;
+	targetDriveBasePosL = (frontLeft.get_position() + backLeft.get_position()) / 2;
+
+	driveBaseTargetSet = true;
 }
 
 void opcontrol()
 {
+	/*intakeUpRequested = false;
+	prepareShotRequested = false;
+	maintainFlywheelSpeedRequested = false;*/
+	flywheelRPMMonitor.suspend();
+	intakeMonitor.suspend();
 	pros::Controller master(CONTROLLER_MASTER);
-	pros::Task flywheelRPMMonitor(maintainFlywheelSpeed, parameter, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Flywheel speed task");
+	//pros::Task flywheelRPMMonitor(maintainFlywheelSpeed, parameter, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Flywheel speed task");
 
 	int leftDrive = 0;
 	int rightDrive = 0;
 	bool firePrinted = false;
 	int flipperTargetPos = 0;
 	float flywheelSpeed = 0;
+	flipper.move_absolute(0, 180);
 
 	while (true)
 	{
+		//std::cout << "Sonar: " << intakeSonar.get_value() << "\n";
 		leftDrive = master.get_analog(ANALOG_LEFT_Y);
 		rightDrive = master.get_analog(ANALOG_RIGHT_Y);
 		frontLeft.move(leftDrive);
@@ -133,15 +132,22 @@ void opcontrol()
 
 		if (master.get_digital(DIGITAL_L2))
 		{
-			if (!(isBetween(ballSonar.get_value(), 50, 80)))
+			if (!(isBetween(indexerSonar.get_value(), 50, 80)))
 			{
 				intake.move_velocity(200);
 				indexer.move_velocity(200);
 			}
-			else
+			else if (!(isBetween(intakeSonar.get_value(), 30, 80)))
 			{
 				intake.move_velocity(200);
 				indexer.move_velocity(0);
+				indexer.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_BRAKE);
+			}
+			else
+			{
+				intake.move_velocity(0);
+				indexer.move_velocity(0);
+				intake.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_BRAKE);
 				indexer.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_BRAKE);
 			}
 		}
@@ -164,19 +170,38 @@ void opcontrol()
 			indexer.move_velocity(0);
 		}
 
-		if (master.get_digital(DIGITAL_R1))
+		if (master.get_digital(DIGITAL_X))
 		{
-			if (doingFirstShot == true)
+			if (driveBaseTargetSet == false)
 			{
-				targetFlywheelSpeed = 190;
-				maintainFlywheelSpeedRequested = true;
+				setTargetDriveBasePos();
 			}
+			holdDrivePos(targetDriveBasePosL, targetDriveBasePosR);
 		}
 		else
 		{
-			maintainFlywheelSpeedRequested = false;
-			targetFlywheelSpeed = 0;
-			doingFirstShot = true;
+			driveBaseTargetSet = false;
+		}
+
+		if (master.get_digital(DIGITAL_R1))
+		{
+			flywheelSpeed = 12000;
+			flywheel.move_voltage(flywheelSpeed);
+			std::cout << flywheel.get_actual_velocity() << "\n";
+		}
+		else
+		{
+			flywheel.move_voltage(0);
+			flywheel.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_COAST);
+			/*if (flywheelSpeed > 0)
+			{
+				flywheelSpeed -= 3;
+			}
+			else if (flywheelSpeed < 0)
+			{
+				flywheelSpeed += 3;
+			}
+			flywheel.move(flywheelSpeed);*/
 		}
 
 		if (flywheel.get_actual_velocity() <= 164 && firePrinted == false)
@@ -200,17 +225,11 @@ void opcontrol()
 			flipper.move_velocity(-200);
 			holdFlipperRequested = false;
 		}
-		else if (master.get_digital(DIGITAL_RIGHT))
-		{
-			holdFlipperRequested = true;
-			flipperTargetPos = 200;
-		}
-		else if (holdFlipperRequested == false)
+		else
 		{
 			flipper.move_velocity(0);
+			flipper.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_HOLD);
 		}
-
-		holdFlipper(flipperTargetPos);
 
 		pros::delay(2);
 	}

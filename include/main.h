@@ -34,32 +34,49 @@
  */
 #define PROS_USE_LITERALS
 
-#include "api.h"
-
-extern pros::Motor frontLeft;
-extern pros::Motor backLeft;
-extern pros::Motor frontRight;
-extern pros::Motor backRight;
-extern pros::Motor intake;
-extern pros::Motor indexer;
-extern pros::Motor flywheel;
-extern pros::Motor flipper;
-extern pros::ADIGyro gyro;
-extern pros::ADIUltrasonic ballSonar;
-extern pros::Controller master;
-extern int autoMode;
-extern bool maintainFlywheelSpeedRequested;
-
-//Function Externs here/////
-extern bool isBetween(float number, float rangeLower, float rangeUpper);
-extern void maintainFlywheelSpeed(void *param);
-
 /**
  * You should add more #includes here
  */
+#include "api.h"
+#include <iostream>
+#include <fstream>
 //#include "okapi/api.hpp"
 //#include "pros/api_legacy.h"
 #include "pros/rtos.hpp"
+#include "mathUtil.h"
+#include "subsystems.h"
+
+extern pros::Motor flipper;
+
+extern pros::Vision visionSensor;
+extern pros::Controller master;
+
+extern int autoMode;
+extern char *parameter3;
+extern bool intakeUpRequested; //boolean for state of intake request
+extern bool intakeOutRequested;
+extern bool prepareShotRequested;
+extern char *parameter2;
+extern int targetShootingTicks;
+extern bool shootBallRequested;
+extern int globalTargetAngle;
+/*extern bool holdFlipperRequested = false;
+extern int targetFlipperPos = 0;*/
+
+//extern bool maintainFlywheelSpeedRequested;
+
+//Function Externs here/////
+extern bool isBetween(float number, float rangeLower, float rangeUpper);
+extern void setRightDrive(int voltage);
+extern void setLeftDrive(int voltage);
+extern void holdFlipper(char *param);
+//extern void maintainFlywheelSpeed(void *param);
+
+//Task Externs here////////
+/*pros::Task flywheelRPMMonitor;
+pros::Task intakeMonitor;*/
+extern pros::Task flywheelRPMMonitor;
+extern pros::Task intakeMonitor;
 
 /**
  * If you find doing pros::Motor() to be tedious and you'd prefer just to do
@@ -71,7 +88,7 @@ extern void maintainFlywheelSpeed(void *param);
  */
 //using namespace pros;
 // using namespace pros::literals;
-// using namespace okapi;
+//using namespace okapi;
 
 /**
  * Prototypes for the competition control tasks are redefined here to ensure

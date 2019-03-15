@@ -1,5 +1,12 @@
 #include "main.h"
 
+#define CAP_FLIPPER 9
+#define VISION_SENSOR_PORT 13
+
+pros::Motor flipper(CAP_FLIPPER);
+
+pros::Vision visionSensor(VISION_SENSOR_PORT);
+
 bool readyToExitAutoSelector = false;
 void autonSelector();
 
@@ -31,6 +38,48 @@ void incrementAutoMode()
 	}
 }
 
+/*
+int targetFlywheelSpeed = 0;
+bool maintainFlywheelSpeedRequested = false;
+bool flywheelOnTarget = false;
+char *parameter3;
+void maintainFlywheelSpeed(void *param)
+{
+	float kp = 80;
+	float ki = 0;
+	float kd = 0;
+	int currentSpeed = flywheel.get_actual_velocity();
+	int error = targetFlywheelSpeed - currentSpeed;
+	float finalAdjustment = error * kp; //add the rest of PID to this calculation
+
+	while (true)
+	{
+		if (maintainFlywheelSpeedRequested == true)
+		{
+			currentSpeed = flywheel.get_actual_velocity();
+			error = targetFlywheelSpeed - currentSpeed;
+
+			if (abs(error) < 6)
+			{
+				flywheelOnTarget = true;
+			}
+			else
+			{
+				flywheelOnTarget = false;
+			}
+			finalAdjustment = error * kp; //add the rest of PID to this calculation
+			flywheel.move_voltage(flywheel.get_voltage() + finalAdjustment);
+			std::cout << targetFlywheelSpeed << "\n";
+		}
+		else
+		{
+			flywheel.move_voltage(0);
+			flywheelOnTarget = false;
+		}
+		pros::delay(5);
+	}
+}*/
+
 /**
  * Runs initialization code. This occurs as soon as the program is started.
  *
@@ -48,9 +97,12 @@ void initialize()
 	intake.set_encoder_units(pros::E_MOTOR_ENCODER_DEGREES);
 	flywheel.set_encoder_units(pros::E_MOTOR_ENCODER_DEGREES);
 	flipper.set_encoder_units(pros::E_MOTOR_ENCODER_DEGREES);
-	pros::Controller master(CONTROLLER_MASTER);
 
 	flipper.tare_position();
+	visionSensor.clear_led();
+	flywheel.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_COAST);
+
+	pros::Controller master(CONTROLLER_MASTER);
 }
 
 /**
@@ -58,17 +110,9 @@ void initialize()
  * the VEX Competition Switch, following either autonomous or opcontrol. When
  * the robot is enabled, this task will exit.
  */
-void disabled() {}
-
-/**
- * Runs after initialize(), and before autonomous when connected to the Field
- * Management System or the VEX Competition Switch. This is intended for
- * competition-specific initialization routines, such as an autonomous selector
- * on the LCD.
- *
- * This task will exit when the robot is enabled and autonomous or opcontrol
- * starts.
- */
+void disabled()
+{
+}
 
 int autoMode = 1;
 pros::Controller master(CONTROLLER_MASTER);
@@ -134,6 +178,15 @@ void autonSelector()
 	pros::lcd::shutdown();
 }
 
+/**
+ * Runs after initialize(), and before autonomous when connected to the Field
+ * Management System or the VEX Competition Switch. This is intended for
+ * competition-specific initialization routines, such as an autonomous selector
+ * on the LCD.
+ *
+ * This task will exit when the robot is enabled and autonomous or opcontrol
+ * starts.
+ */
 void competition_initialize()
 {
 	autonSelector();
