@@ -159,8 +159,8 @@ vex::vision vision1(vex::PORT1, 50, BLUEFLAG, REDFLAG, SIG_3, SIG_4, SIG_5, SIG_
 }*/
 void testAuto()
 {
-  moveCapScorer(480);
-  drive('b', 26, 8000);
+  //moveCapScorer(480);
+  driveRampUp('f', 26);
 
   //Red Cross Court Shooting//
   /*startFlywheel(188);
@@ -448,7 +448,7 @@ void autonomous()
   //pros::Task flywheelRPMMonitor(maintainFlywheelSpeed, parameter3, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Flywheel speed task");
   //pros::Task intakeMonitor(monitorIntake, parameter2, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Intake auto movement task");
 
-  autoMode = 20;
+  autoMode = 0;
   if (autoMode == 1)
   {
     auto1();

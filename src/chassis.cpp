@@ -210,8 +210,8 @@ void driveRampUp(char dir, float inches)
   int lastAngleError = 0;
 
   //Constants here//
-  float kp = 20;
-  float increaseFactor = .4;
+  float kp = 24;
+  float increaseFactor = .3;
 
   //Tolerance Variables Here//
   int speedTolerance = 10;
@@ -234,7 +234,9 @@ void driveRampUp(char dir, float inches)
     angleError = startingAngle - gyro.get_value();
 
     error = ticks - ((frontRight.get_position() + backRight.get_position() + frontLeft.get_position() + backLeft.get_position()) / 4);
-
+    if ((error < 0 && error > -200) || (error > 0 && error < 200))
+    {
+    }
     driveSpeed = error * kp;
 
     if (isBetween(driveSpeed, -1 * speedDeadband, 0))
@@ -244,6 +246,15 @@ void driveRampUp(char dir, float inches)
     if (isBetween(driveSpeed, 0, speedDeadband))
     {
       driveSpeed = speedDeadband;
+    }
+
+    if (isBetween(abs(lastDriveSpeed), 0, speedDeadband + 3000))
+    {
+      increaseFactor = .3;
+    }
+    else
+    {
+      increaseFactor = .8;
     }
 
     if (driveSpeed > 0 && lastDriveSpeed >= 0 && driveSpeed > lastDriveSpeed)

@@ -45,6 +45,7 @@
 #include "pros/rtos.hpp"
 #include "mathUtil.h"
 #include "subsystems.h"
+#include "autonInitialize.h"
 
 extern pros::Motor flipper;
 

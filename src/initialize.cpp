@@ -38,48 +38,6 @@ void incrementAutoMode()
 	}
 }
 
-/*
-int targetFlywheelSpeed = 0;
-bool maintainFlywheelSpeedRequested = false;
-bool flywheelOnTarget = false;
-char *parameter3;
-void maintainFlywheelSpeed(void *param)
-{
-	float kp = 80;
-	float ki = 0;
-	float kd = 0;
-	int currentSpeed = flywheel.get_actual_velocity();
-	int error = targetFlywheelSpeed - currentSpeed;
-	float finalAdjustment = error * kp; //add the rest of PID to this calculation
-
-	while (true)
-	{
-		if (maintainFlywheelSpeedRequested == true)
-		{
-			currentSpeed = flywheel.get_actual_velocity();
-			error = targetFlywheelSpeed - currentSpeed;
-
-			if (abs(error) < 6)
-			{
-				flywheelOnTarget = true;
-			}
-			else
-			{
-				flywheelOnTarget = false;
-			}
-			finalAdjustment = error * kp; //add the rest of PID to this calculation
-			flywheel.move_voltage(flywheel.get_voltage() + finalAdjustment);
-			std::cout << targetFlywheelSpeed << "\n";
-		}
-		else
-		{
-			flywheel.move_voltage(0);
-			flywheelOnTarget = false;
-		}
-		pros::delay(5);
-	}
-}*/
-
 /**
  * Runs initialization code. This occurs as soon as the program is started.
  *
@@ -88,7 +46,6 @@ void maintainFlywheelSpeed(void *param)
  */
 void initialize()
 {
-	pros::lcd::initialize();
 
 	frontRight.set_encoder_units(pros::E_MOTOR_ENCODER_DEGREES);
 	backRight.set_encoder_units(pros::E_MOTOR_ENCODER_DEGREES);
@@ -103,6 +60,8 @@ void initialize()
 	flywheel.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_COAST);
 
 	pros::Controller master(CONTROLLER_MASTER);
+
+	autonSelector();
 }
 
 /**
@@ -118,29 +77,6 @@ int autoMode = 1;
 pros::Controller master(CONTROLLER_MASTER);
 
 /*void autonSelector()
-{
-
-	master.print(0, 4, "Select Auton: ");exit
-	pros::delay(2000);
-
-	//Documentation for this library: https://docs.littlevgl.com
-	lv_obj_t *autonSelectorParent = lv_obj_create(lv_scr_act(), NULL);
-	lv_obj_set_size(autonSelectorParent, 400, 400);
-
-	lv_obj_t *redFront = lv_btn_create(autonSelectorParent, NULL);
-	lv_obj_align(redFront, NULL, LV_ALIGN_IN_TOP_LEFT, 10, 10);
-
-	lv_obj_t *redBack = lv_btn_create(autonSelectorParent, NULL);
-	lv_obj_align(redBack, NULL, LV_ALIGN_IN_TOP_RIGHT, 10, 10);
-
-	lv_obj_t *blueFront = lv_btn_create(autonSelectorParent, NULL);
-	lv_obj_align(blueFront, NULL, LV_ALIGN_IN_BOTTOM_LEFT, 10, 10);
-
-	lv_obj_t *blueBack = lv_btn_create(autonSelectorParent, NULL);
-	lv_obj_align(blueBack, NULL, LV_ALIGN_IN_BOTTOM_RIGHT, 10, 10);
-}*/
-
-void autonSelector()
 {
 	pros::lcd::register_btn0_cb(decrementAutoMode);
 	pros::lcd::register_btn1_cb(exitAutoSelector);
@@ -176,7 +112,7 @@ void autonSelector()
 		pros::delay(2);
 	}
 	pros::lcd::shutdown();
-}
+}*/
 
 /**
  * Runs after initialize(), and before autonomous when connected to the Field
@@ -189,5 +125,4 @@ void autonSelector()
  */
 void competition_initialize()
 {
-	autonSelector();
 }
