@@ -15,25 +15,25 @@
  */
 
 /**************Define important variables here***************************/
-bool holdFlipperRequested = false;
-int targetFlipperPos = 0;
+bool holdcapScraperRequested = false;
+int targetcapScraperPos = 0;
 bool flywheelRPMDropped = false;
 
-void holdFlipper(char *param)
+void holdcapScraper(char *param)
 {
 	float kp = 5;
-	if (holdFlipperRequested == true)
+	if (holdcapScraperRequested == true)
 	{
-		int error = targetFlipperPos - flipper.get_position();
+		int error; // = targetcapScraperPos - capScraper.get_position();
 
 		if (error > 4)
 		{
-			flipper.move(error * kp);
+			capScraper.move(error * kp);
 		}
 		else
 		{
-			flipper.move(0);
-			flipper.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_HOLD);
+			capScraper.move(0);
+			capScraper.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_HOLD);
 		}
 	}
 }
@@ -116,9 +116,9 @@ void opcontrol()
 	int leftDrive = 0;
 	int rightDrive = 0;
 	bool firePrinted = false;
-	int flipperTargetPos = 0;
+	int capScraperTargetPos = 0;
 	float flywheelSpeed = 0;
-	flipper.move_absolute(0, 180);
+	capScraper.move_absolute(0, 180);
 
 	while (true)
 	{
@@ -193,15 +193,6 @@ void opcontrol()
 		{
 			flywheel.move_voltage(0);
 			flywheel.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_COAST);
-			/*if (flywheelSpeed > 0)
-			{
-				flywheelSpeed -= 3;
-			}
-			else if (flywheelSpeed < 0)
-			{
-				flywheelSpeed += 3;
-			}
-			flywheel.move(flywheelSpeed);*/
 		}
 
 		if (flywheel.get_actual_velocity() <= 164 && firePrinted == false)
@@ -217,18 +208,18 @@ void opcontrol()
 
 		if (master.get_digital(DIGITAL_UP))
 		{
-			flipper.move_velocity(200);
-			holdFlipperRequested = false;
+			capScraper.move_velocity(200);
+			holdcapScraperRequested = false;
 		}
 		else if (master.get_digital(DIGITAL_DOWN))
 		{
-			flipper.move_velocity(-200);
-			holdFlipperRequested = false;
+			capScraper.move_velocity(-200);
+			holdcapScraperRequested = false;
 		}
 		else
 		{
-			flipper.move_velocity(0);
-			flipper.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_HOLD);
+			capScraper.move_velocity(0);
+			capScraper.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_HOLD);
 		}
 
 		pros::delay(2);

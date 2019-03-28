@@ -6,10 +6,9 @@
 #define FLY_WHEEL_PORT 14
 
 extern pros::Motor flywheel;
+extern const float flywheelGearingFactor;
 
 /*************************Flywheel Status Global Variables*************************************/
-extern int targetFlywheelSpeed;
-extern int targetFlywheelVoltage;
 extern bool maintainFlywheelSpeedRequested;
 extern bool runFlywheelAtVoltageRequested;
 extern bool flywheelAutoVelControl;
@@ -17,6 +16,8 @@ extern bool flywheelOnTarget;
 
 /*****************************Flywheel Velocity Control Variables*****************************/
 extern float currentFlywheelVoltage;
+extern int targetFlywheelSpeed;
+extern int targetFlywheelVoltage;
 
 /*************************Flywheel Status Functions******************************************/
 extern void setFlywheelVoltage(int voltage);
@@ -28,7 +29,7 @@ extern void stopFlywheel();
 extern void setFlywheelTargetSpeed(int speed);
 
 /************************************Flywheel Velocity Control Functions*************************/
-extern float determineFlywheelVoltage(float targetVelocity);
+extern float estimateFlywheelVoltage(float targetVelocity);
 
 /******************************Flywheel Status Handling Task**********************************/
 extern char *parameter3;

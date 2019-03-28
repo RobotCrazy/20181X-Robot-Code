@@ -1,9 +1,6 @@
 #include "main.h"
 
-#define CAP_FLIPPER 9
 #define VISION_SENSOR_PORT 13
-
-pros::Motor flipper(CAP_FLIPPER);
 
 pros::Vision visionSensor(VISION_SENSOR_PORT);
 
@@ -53,10 +50,11 @@ void initialize()
 	backLeft.set_encoder_units(pros::E_MOTOR_ENCODER_DEGREES);
 	intake.set_encoder_units(pros::E_MOTOR_ENCODER_DEGREES);
 	flywheel.set_encoder_units(pros::E_MOTOR_ENCODER_DEGREES);
-	flipper.set_encoder_units(pros::E_MOTOR_ENCODER_DEGREES);
+	capScraper.set_encoder_units(pros::E_MOTOR_ENCODER_DEGREES);
 
-	flipper.tare_position();
+	capScraper.tare_position();
 	visionSensor.clear_led();
+	accelerX.calibrate();
 	flywheel.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_COAST);
 
 	pros::Controller master(CONTROLLER_MASTER);

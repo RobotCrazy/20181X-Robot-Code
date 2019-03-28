@@ -47,8 +47,6 @@
 #include "subsystems.h"
 #include "autonInitialize.h"
 
-extern pros::Motor flipper;
-
 extern pros::Vision visionSensor;
 extern pros::Controller master;
 

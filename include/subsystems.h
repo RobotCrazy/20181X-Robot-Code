@@ -4,5 +4,6 @@
 #include "chassis.h"
 #include "flywheel.h"
 #include "intake.h"
+#include "capScraper.h"
 
 #endif

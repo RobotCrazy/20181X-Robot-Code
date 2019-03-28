@@ -7,6 +7,7 @@ pros::Motor backLeft(BACK_LEFT_PORT);
 pros::Motor frontRight(FRONT_RIGHT_PORT, true);
 pros::Motor backRight(BACK_RIGHT_PORT, true);
 pros::ADIGyro gyro(GYRO_PORT);
+pros::ADIAnalogIn accelerX(ACCELEROMETER_X_PORT);
 
 /*****************************Chassis Movement Global Variables************************************/
 int globalTargetAngle = 0;
@@ -432,6 +433,12 @@ void turn(char dir, int degrees, int topSpeed, bool waitForCompletion)
       pros::delay(2);
     }
   }
+}
+
+void climbPlatform()
+{
+  int driveSpeed = 0;
+  int lastDriveSpeed = 0;
 }
 
 /****************************Chassis General Functions**********************************/

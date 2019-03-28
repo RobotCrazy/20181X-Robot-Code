@@ -68,21 +68,21 @@ void alignToFlag()
 
 void moveCapScorer(int pos)
 {
-  int error = pos - flipper.get_position();
+  int error = pos - capScraper.get_position();
   float speed = 10000;
-  //targetFlipperPos = pos;
+  //targetcapScraperPos = pos;
   while (abs(error) > 50)
   {
-    error = pos - flipper.get_position();
-    flipper.move_voltage(speed);
-    std::cout << flipper.get_position() << "\n";
+    error = pos - capScraper.get_position();
+    capScraper.move_voltage(speed);
+    std::cout << capScraper.get_position() << "\n";
     pros::delay(20);
   }
-  flipper.move(0);
-  flipper.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_HOLD);
+  capScraper.move(0);
+  capScraper.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_HOLD);
   /*while (true)
   {
-    error = pos - flipper.get_position();
+    error = pos - capScraper.get_position();
     std::cout << error << "\n;";
   }*/
   std::cout
