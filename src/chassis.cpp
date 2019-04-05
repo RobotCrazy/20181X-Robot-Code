@@ -1,6 +1,4 @@
-#include "chassis.h"
 #include "main.h"
-#include "mathUtil.h"
 
 pros::Motor frontLeft(FRONT_LEFT_PORT);
 pros::Motor backLeft(BACK_LEFT_PORT);
@@ -9,9 +7,13 @@ pros::Motor backRight(BACK_RIGHT_PORT, true);
 pros::ADIGyro gyro(GYRO_PORT);
 pros::ADIAnalogIn accelerX(ACCELEROMETER_X_PORT);
 
+//const float driveSlewFactor = .2;
+
 /*****************************Chassis Movement Global Variables************************************/
 int globalTargetAngle = 0;
 double wheelCircumference = (WHEEL_RADIUS * 2 * PI);
+//float prevLeftSpeed = 0;
+//float prevRightSpeed = 0;
 
 /*****************************Chassis Helper Functions**************************************/
 void setRightDrive(int voltage)
@@ -435,10 +437,45 @@ void turn(char dir, int degrees, int topSpeed, bool waitForCompletion)
   }
 }
 
-void climbPlatform()
+//Should there really be a maximum number of inches???
+void climbPlatform(float maxInches)
 {
-  int driveSpeed = 0;
-  int lastDriveSpeed = 0;
+  frontRight.tare_position();
+  backRight.tare_position();
+  frontLeft.tare_position();
+  backLeft.tare_position();
+
+  int ticks = (int)((maxInches / (PI * WHEEL_RADIUS)) * 180);
+  int error = ticks - ((frontRight.get_position() + backRight.get_position() + frontLeft.get_position() + backLeft.get_position()) / 4);
+
+  float driveSpeed = 0;
+  float lastDriveSpeed = 0;
+  float increaseFactor = .5;
+
+  int acceleration = accelerX.get_value_calibrated_HR();
+  bool onPlatform = false;
+
+  while (onPlatform == false)
+  {
+    if (driveSpeed > 0 && lastDriveSpeed >= 0 && driveSpeed > lastDriveSpeed)
+    {
+      setLeftDrive(lastDriveSpeed);
+      setRightDrive(lastDriveSpeed);
+      lastDriveSpeed += increaseFactor;
+    }
+    else if (driveSpeed < 0 && lastDriveSpeed <= 0 && driveSpeed < lastDriveSpeed)
+    {
+      setLeftDrive(lastDriveSpeed - increaseFactor);
+      setRightDrive(lastDriveSpeed - increaseFactor);
+      lastDriveSpeed -= increaseFactor;
+    }
+    else
+    {
+      setLeftDrive(driveSpeed);
+      setRightDrive(driveSpeed);
+      lastDriveSpeed = driveSpeed;
+    }
+  }
 }
 
 /****************************Chassis General Functions**********************************/
@@ -462,3 +499,35 @@ void holdDrivePos(int targetPosL, int targetPosR)
     setRightDrive(0);
   }
 }
+
+/*void slewRightDrive(int rightSpeed)
+{
+  if (rightSpeed > prevRightSpeed)
+  {
+    prevRightSpeed += driveSlewFactor;
+    frontRight.move(prevRightSpeed);
+    backRight.move(prevRightSpeed);
+  }
+  else if (rightSpeed < prevRightSpeed)
+  {
+    prevRightSpeed -= driveSlewFactor;
+    frontRight.move(prevRightSpeed);
+    backRight.move(prevRightSpeed);
+  }
+}
+
+void slewLeftDrive(int leftSpeed)
+{
+  if (leftSpeed > prevLeftSpeed)
+  {
+    prevLeftSpeed += driveSlewFactor;
+    frontLeft.move(prevLeftSpeed);
+    backLeft.move(prevLeftSpeed);
+  }
+  else if (leftSpeed < prevLeftSpeed)
+  {
+    prevLeftSpeed -= driveSlewFactor;
+    frontLeft.move(prevLeftSpeed);
+    backLeft.move(prevLeftSpeed);
+  }
+}*/

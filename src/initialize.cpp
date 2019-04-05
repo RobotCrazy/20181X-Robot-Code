@@ -56,6 +56,7 @@ void initialize()
 	visionSensor.clear_led();
 	accelerX.calibrate();
 	flywheel.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_COAST);
+	capScraper.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_BRAKE);
 
 	pros::Controller master(CONTROLLER_MASTER);
 

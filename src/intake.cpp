@@ -1,8 +1,8 @@
 #include "intake.h"
 #include "main.h"
 
-pros::Motor intake(INTAKE_PORT);
-pros::Motor indexer(INDEXER_PORT, true);
+pros::Motor intake(INTAKE_PORT, true);
+pros::Motor indexer(INDEXER_PORT, false);
 pros::ADIUltrasonic intakeSonar(INTAKE_SONAR_PORT_PING, INTAKE_SONAR_PORT_ECHO);
 pros::ADIUltrasonic indexerSonar(INDEXER_SONAR_PORT_PING, INDEXER_SONAR_PORT_ECHO);
 

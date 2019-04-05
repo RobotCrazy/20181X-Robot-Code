@@ -3,7 +3,7 @@
 #ifndef _FLYWHEEL_H_
 #define _FLYWHEEL_H_
 
-#define FLY_WHEEL_PORT 14
+#define FLY_WHEEL_PORT 18
 
 extern pros::Motor flywheel;
 extern const float flywheelGearingFactor;
@@ -18,6 +18,8 @@ extern bool flywheelOnTarget;
 extern float currentFlywheelVoltage;
 extern int targetFlywheelSpeed;
 extern int targetFlywheelVoltage;
+
+extern double prevVelocities[20];
 
 /*************************Flywheel Status Functions******************************************/
 extern void setFlywheelVoltage(int voltage);

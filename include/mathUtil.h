@@ -5,5 +5,6 @@
 
 extern double degreeToRadian(double degrees);
 extern bool isBetween(float number, float rangeLower, float rangeUpper);
+extern int sign(int num);
 
 #endif

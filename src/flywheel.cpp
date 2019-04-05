@@ -15,6 +15,8 @@ float currentFlywheelVoltage = 0;
 int targetFlywheelSpeed = 0;
 int targetFlywheelVoltage = 0;
 
+double prevVelocities[20] = {};
+
 /******************************Flywheel Status Functions**************************************/
 void setFlywheelVoltage(int voltage)
 {
@@ -77,6 +79,26 @@ float estimateFlywheelVoltage(float targetVelocity) //Fix this to be in terms of
   {
     return voltage;
   }
+}
+
+double averagePrevVelocity()
+{
+  double average = 0;
+  for (int i = 0; i < 20; i++)
+  {
+    average += prevVelocities[i];
+  }
+  average /= 20;
+  return average;
+}
+
+/**
+ * This function is used to detect a major drop in rpm in the flywheel 
+ * to detect when a shot has been made.
+ **/
+void detectRPMDrop()
+{
+  double initialRPMAverage = averagePrevVelocity();
 }
 
 /******************************Flywheel Status Handling Task**********************************/

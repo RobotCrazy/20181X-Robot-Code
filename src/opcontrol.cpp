@@ -15,28 +15,8 @@
  */
 
 /**************Define important variables here***************************/
-bool holdcapScraperRequested = false;
 int targetcapScraperPos = 0;
 bool flywheelRPMDropped = false;
-
-void holdcapScraper(char *param)
-{
-	float kp = 5;
-	if (holdcapScraperRequested == true)
-	{
-		int error; // = targetcapScraperPos - capScraper.get_position();
-
-		if (error > 4)
-		{
-			capScraper.move(error * kp);
-		}
-		else
-		{
-			capScraper.move(0);
-			capScraper.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_HOLD);
-		}
-	}
-}
 
 /*bool maintainFlywheelSpeedRequested = false;
 bool flywheelOnTarget = false;
@@ -51,44 +31,6 @@ void detectFlywheelSpeedDrop()
 		targetFlywheelSpeed = 150;
 		doingFirstShot = false;
 		flywheelOnTarget = false;
-	}
-}
-
-char *parameter;
-void maintainFlywheelSpeed(void *param)
-{
-	float kp = 80;
-	float ki = 0;
-	float kd = 0;
-	int currentSpeed = flywheel.get_actual_velocity();
-	int error = targetFlywheelSpeed - currentSpeed;
-	float finalAdjustment = error * kp; //add the rest of PID to this calculation
-
-	while (true)
-	{
-		if (maintainFlywheelSpeedRequested == true)
-		{
-			currentSpeed = flywheel.get_actual_velocity();
-			error = targetFlywheelSpeed - currentSpeed;
-
-			if (flywheelOnTarget == false && abs(error) < 10)
-			{
-				flywheelOnTarget = true;
-			}
-			finalAdjustment = error * kp; //add the rest of PID to this calculation
-			flywheel.move_voltage(flywheel.get_voltage() + finalAdjustment);
-			std::cout << targetFlywheelSpeed << "\n";
-			pros::delay(5);
-		}
-		else
-		{
-			currentSpeed = flywheel.get_actual_velocity();
-			error = targetFlywheelSpeed - currentSpeed;
-			finalAdjustment = currentSpeed * kp; //add the rest of PID to this calculation
-			flywheel.move_voltage(0);
-			flywheelOnTarget = false;
-		}
-		detectFlywheelSpeedDrop();
 	}
 }*/
 
@@ -118,7 +60,6 @@ void opcontrol()
 	bool firePrinted = false;
 	int capScraperTargetPos = 0;
 	float flywheelSpeed = 0;
-	capScraper.move_absolute(0, 180);
 
 	while (true)
 	{
@@ -132,24 +73,9 @@ void opcontrol()
 
 		if (master.get_digital(DIGITAL_L2))
 		{
-			if (!(isBetween(indexerSonar.get_value(), 50, 80)))
-			{
-				intake.move_velocity(200);
-				indexer.move_velocity(200);
-			}
-			else if (!(isBetween(intakeSonar.get_value(), 30, 80)))
-			{
-				intake.move_velocity(200);
-				indexer.move_velocity(0);
-				indexer.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_BRAKE);
-			}
-			else
-			{
-				intake.move_velocity(0);
-				indexer.move_velocity(0);
-				intake.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_BRAKE);
-				indexer.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_BRAKE);
-			}
+			intake.move_velocity(200);
+			indexer.move_velocity(0);
+			indexer.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_HOLD);
 		}
 		else if (master.get_digital(DIGITAL_L1))
 		{
@@ -209,17 +135,15 @@ void opcontrol()
 		if (master.get_digital(DIGITAL_UP))
 		{
 			capScraper.move_velocity(200);
-			holdcapScraperRequested = false;
 		}
 		else if (master.get_digital(DIGITAL_DOWN))
 		{
-			capScraper.move_velocity(-200);
-			holdcapScraperRequested = false;
+			capScraper.move_velocity(-125);
 		}
 		else
 		{
 			capScraper.move_velocity(0);
-			capScraper.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_HOLD);
+			capScraper.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_BRAKE);
 		}
 
 		pros::delay(2);

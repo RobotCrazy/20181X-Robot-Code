@@ -3,8 +3,8 @@
 #ifndef _INTAKE_H_
 #define _INTAKE_H_
 
-#define INTAKE_PORT 12
-#define INDEXER_PORT 19
+#define INTAKE_PORT 14
+#define INDEXER_PORT 16
 #define INTAKE_SONAR_PORT_PING 'C'
 #define INTAKE_SONAR_PORT_ECHO 'D'
 #define INDEXER_SONAR_PORT_PING 'A'

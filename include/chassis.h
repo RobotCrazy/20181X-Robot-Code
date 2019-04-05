@@ -3,10 +3,10 @@
 #ifndef _CHASSIS_H_
 #define _CHASSIS_H_
 
-#define FRONT_LEFT_PORT 4
-#define BACK_LEFT_PORT 7
-#define FRONT_RIGHT_PORT 6
-#define BACK_RIGHT_PORT 5
+#define FRONT_LEFT_PORT 15
+#define BACK_LEFT_PORT 17
+#define FRONT_RIGHT_PORT 19
+#define BACK_RIGHT_PORT 20
 #define GYRO_PORT 'E'
 #define ACCELEROMETER_X_PORT 'A'
 
@@ -24,6 +24,8 @@ extern pros::ADIAnalogIn accelerX;
 /*****************************Chassis Movement Global Variables************************************/
 extern int globalTargetAngle;
 extern double wheelCircumference;
+//extern float prevLeftSpeed;
+//extern float prevRightSpeed;
 
 /********************************Chassis Helper Function Declarations******************************/
 extern void setRightDrive(int voltage);
@@ -36,9 +38,11 @@ extern void drive(char dir, float inches);
 extern void driveRampUp(char dir, float inches);
 extern void driveShootAsync(char dir, float inches, int distance1, int distance2);
 extern void turnToTarget(float targetAngle, int maxSpeed);
-extern void climbPlatform();
+//extern void climbPlatform(float maxInches);
 
 /****************************Chassis General Functions**********************************/
 extern void holdDrivePos(int targetPosL, int targetPosR);
+//extern void slewRightDrive(int rightSpeed);
+//extern void slewLeftDrive(int leftSpeed);
 
 #endif
