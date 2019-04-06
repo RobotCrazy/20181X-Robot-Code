@@ -7,7 +7,12 @@
 
 extern pros::Motor capScraper;
 
+extern int capScraperTargetPos;
+extern bool holdCapScraperRequested;
+
 //extern const int capScraperMaxPos = 20; //Maximum height for cap scraper
 //extern const int capScraperMinPos = 200;
+
+extern void holdCapScraperPos();
 
 #endif

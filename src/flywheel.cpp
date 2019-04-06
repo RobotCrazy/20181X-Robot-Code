@@ -9,6 +9,7 @@ bool maintainFlywheelSpeedRequested = false;
 bool runFlywheelAtVoltageRequested = false;
 bool flywheelAutoVelControl = false;
 bool flywheelOnTarget = false;
+bool flywheelShotDetected = false;
 
 /*****************************Flywheel Velocity Control Variables*****************************/
 float currentFlywheelVoltage = 0;
@@ -65,9 +66,9 @@ void setFlywheelTargetSpeed(int speed)
 /************************************Flywheel Velocity Control Functions*************************/
 float estimateFlywheelVoltage(float targetVelocity) //Fix this to be in terms of voltage
 {
-  float voltage = ((0.6676889314051 * targetVelocity) - 7.03063980643);
+  //float voltage = ((0.6676889314051 * targetVelocity) - 7.03063980643);
 
-  if (voltage > 127)
+  /*if (voltage > 127)
   {
     voltage = 127;
   }
@@ -76,9 +77,9 @@ float estimateFlywheelVoltage(float targetVelocity) //Fix this to be in terms of
     voltage = 0;
   }
   else
-  {
-    return voltage;
-  }
+  {*/
+  return 11000;
+  //}
 }
 
 double averagePrevVelocity()
@@ -98,7 +99,18 @@ double averagePrevVelocity()
  **/
 void detectRPMDrop()
 {
-  double initialRPMAverage = averagePrevVelocity();
+  if (flywheelOnTarget == true)
+  {
+    if (flywheel.get_actual_velocity() < (targetFlywheelSpeed - 4))
+    {
+      flywheelShotDetected = true;
+    }
+    else
+    {
+      flywheelShotDetected = false;
+    }
+  }
+  //flywheelShotDetected = false;
 }
 
 /******************************Flywheel Status Handling Task**********************************/
@@ -107,9 +119,9 @@ void maintainFlywheelSpeed(void *param)
 {
 
   //Constants//
-  float kp = .3;
-  float ki = .01;
-  float kd = 0;
+  double kp = .3;
+  double ki = .5;
+  double kd = 0;
 
   //PID Variables Here//
   double currentVelocity = flywheel.get_actual_velocity() * flywheelGearingFactor;
@@ -120,7 +132,7 @@ void maintainFlywheelSpeed(void *param)
   double error = targetFlywheelSpeed - currentVelocity;
   double lastError = 0;
   double totalError = 0;
-  double integralActiveZone = 100;
+  double integralActiveZone = 30;
   double proportional = 0;
   double integral = 0;
 
@@ -133,23 +145,30 @@ void maintainFlywheelSpeed(void *param)
   {
     if (maintainFlywheelSpeedRequested == true)
     {
-      currentVelocity = flywheel.get_actual_velocity() * flywheelGearingFactor;
+      currentVelocity = flywheel.get_actual_velocity(); // * flywheelGearingFactor;
       error = targetFlywheelSpeed - currentVelocity;
+      std::cout << "error: " << error << "\n";
       proportional = error * kp;
+      std::cout << "p: " << proportional << "\n";
 
-      if (error > integralActiveZone)
+      if (abs(error) < (integralActiveZone - 30))
       {
         totalError += error;
+      }
+      if (abs(error) < integralActiveZone)
+      {
         integral = totalError * ki;
       }
       else
       {
         integral = estimateFlywheelVoltage(targetFlywheelSpeed);
       }
+      std::cout << "i: " << integral << "\n";
       currentFlywheelVoltage = proportional + integral;
 
       flywheel.move_voltage(currentFlywheelVoltage);
     }
+
     else if (runFlywheelAtVoltageRequested == true)
     {
       flywheel.move_voltage(targetFlywheelVoltage);

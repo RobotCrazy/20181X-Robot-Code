@@ -13,6 +13,7 @@ extern bool maintainFlywheelSpeedRequested;
 extern bool runFlywheelAtVoltageRequested;
 extern bool flywheelAutoVelControl;
 extern bool flywheelOnTarget;
+extern bool flywheelShotDetected;
 
 /*****************************Flywheel Velocity Control Variables*****************************/
 extern float currentFlywheelVoltage;
@@ -32,6 +33,8 @@ extern void setFlywheelTargetSpeed(int speed);
 
 /************************************Flywheel Velocity Control Functions*************************/
 extern float estimateFlywheelVoltage(float targetVelocity);
+extern double averagePrevVelocity();
+extern void detectRPMDrop();
 
 /******************************Flywheel Status Handling Task**********************************/
 extern char *parameter3;

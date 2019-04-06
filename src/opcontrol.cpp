@@ -18,22 +18,6 @@
 int targetcapScraperPos = 0;
 bool flywheelRPMDropped = false;
 
-/*bool maintainFlywheelSpeedRequested = false;
-bool flywheelOnTarget = false;
-bool doingFirstShot = true;
-int targetFlywheelSpeed = 0;
-
-void detectFlywheelSpeedDrop()
-{
-	int currentSpeed = flywheel.get_actual_velocity();
-	if (flywheelOnTarget == true && targetFlywheelSpeed - currentSpeed > 10)
-	{
-		targetFlywheelSpeed = 150;
-		doingFirstShot = false;
-		flywheelOnTarget = false;
-	}
-}*/
-
 int targetDriveBasePosL = 0;
 int targetDriveBasePosR = 0;
 bool driveBaseTargetSet = false;
@@ -111,14 +95,27 @@ void opcontrol()
 
 		if (master.get_digital(DIGITAL_R1))
 		{
-			flywheelSpeed = 12000;
-			flywheel.move_voltage(flywheelSpeed);
-			std::cout << flywheel.get_actual_velocity() << "\n";
+			//maintainFlywheelSpeedRequested = true;
+			/*targetFlywheelSpeed = 195;
+			detectRPMDrop();
+			if (flywheel.get_actual_velocity() > 190)
+			{
+				flywheelOnTarget = true;
+			}
+			else
+			{
+				flywheelOnTarget = false;
+			}*/
+			flywheel.move_voltage(12000);
+			//std::cout << flywheel.get_actual_velocity() << "\n";
 		}
 		else
 		{
 			flywheel.move_voltage(0);
 			flywheel.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_COAST);
+			flywheelOnTarget = false;
+			targetFlywheelSpeed = 0;
+			maintainFlywheelSpeedRequested = false;
 		}
 
 		if (flywheel.get_actual_velocity() <= 164 && firePrinted == false)
@@ -135,17 +132,23 @@ void opcontrol()
 		if (master.get_digital(DIGITAL_UP))
 		{
 			capScraper.move_velocity(200);
+			capScraperTargetPos = capScraper.get_position();
+			holdCapScraperRequested = false;
 		}
 		else if (master.get_digital(DIGITAL_DOWN))
 		{
 			capScraper.move_velocity(-125);
+			capScraperTargetPos = capScraper.get_position();
+			holdCapScraperRequested = false;
 		}
 		else
 		{
-			capScraper.move_velocity(0);
-			capScraper.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_BRAKE);
+			holdCapScraperRequested = true;
+			holdCapScraperPos();
 		}
-
-		pros::delay(2);
+		std::cout << "vel: " << flywheel.get_actual_velocity() << "\n";
+		//std::cout << "onTarget" << flywheelOnTarget << "\n";
+		//std::cout << flywheelShotDetected << "\n";
+		pros::delay(20);
 	}
 }
