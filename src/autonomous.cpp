@@ -160,7 +160,13 @@ vex::vision vision1(vex::PORT1, 50, BLUEFLAG, REDFLAG, SIG_3, SIG_4, SIG_5, SIG_
 void testAuto()
 {
   //moveCapScorer(480);
-  driveRampUp('f', 26);
+  startIntake();
+  pros::delay(2000);
+  for (int i = 0; i < 5; i++)
+  {
+    driveRampUp('f', 30);
+    driveRampUp('b', 30);
+  }
 
   //Red Cross Court Shooting//
   /*startFlywheel(188);

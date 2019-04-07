@@ -78,7 +78,7 @@ float estimateFlywheelVoltage(float targetVelocity) //Fix this to be in terms of
   }
   else
   {*/
-  return 11000;
+  return 10000;
   //}
 }
 
@@ -119,8 +119,8 @@ void maintainFlywheelSpeed(void *param)
 {
 
   //Constants//
-  double kp = .3;
-  double ki = .5;
+  double kp = .6;
+  double ki = .3;
   double kd = 0;
 
   //PID Variables Here//
@@ -132,7 +132,7 @@ void maintainFlywheelSpeed(void *param)
   double error = targetFlywheelSpeed - currentVelocity;
   double lastError = 0;
   double totalError = 0;
-  double integralActiveZone = 30;
+  double integralActiveZone = 400;
   double proportional = 0;
   double integral = 0;
 
@@ -145,26 +145,25 @@ void maintainFlywheelSpeed(void *param)
   {
     if (maintainFlywheelSpeedRequested == true)
     {
-      currentVelocity = flywheel.get_actual_velocity(); // * flywheelGearingFactor;
+      currentVelocity = flywheel.get_actual_velocity() * flywheelGearingFactor;
       error = targetFlywheelSpeed - currentVelocity;
-      std::cout << "error: " << error << "\n";
       proportional = error * kp;
-      std::cout << "p: " << proportional << "\n";
 
-      if (abs(error) < (integralActiveZone - 30))
+      if (abs(error) > integralActiveZone)
       {
-        totalError += error;
-      }
-      if (abs(error) < integralActiveZone)
-      {
-        integral = totalError * ki;
+        totalError = estimateFlywheelVoltage(targetFlywheelSpeed) / ki;
       }
       else
       {
-        integral = estimateFlywheelVoltage(targetFlywheelSpeed);
+        totalError += error;
       }
-      std::cout << "i: " << integral << "\n";
+
+      integral = totalError * ki;
       currentFlywheelVoltage = proportional + integral;
+
+      std::cout << "vel: " << currentVelocity << "   e: " << error
+                << "   p: " << proportional << "   i: " << integral << "    volt: "
+                << currentFlywheelVoltage << "\n\n";
 
       flywheel.move_voltage(currentFlywheelVoltage);
     }

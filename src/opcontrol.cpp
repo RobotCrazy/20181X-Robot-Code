@@ -34,7 +34,7 @@ void opcontrol()
 	/*intakeUpRequested = false;
 	prepareShotRequested = false;
 	maintainFlywheelSpeedRequested = false;*/
-	flywheelRPMMonitor.suspend();
+	//flywheelRPMMonitor.suspend();
 	intakeMonitor.suspend();
 	pros::Controller master(CONTROLLER_MASTER);
 	//pros::Task flywheelRPMMonitor(maintainFlywheelSpeed, parameter, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Flywheel speed task");
@@ -95,8 +95,8 @@ void opcontrol()
 
 		if (master.get_digital(DIGITAL_R1))
 		{
-			//maintainFlywheelSpeedRequested = true;
-			/*targetFlywheelSpeed = 195;
+			maintainFlywheelSpeedRequested = true;
+			targetFlywheelSpeed = 3000;
 			detectRPMDrop();
 			if (flywheel.get_actual_velocity() > 190)
 			{
@@ -105,8 +105,8 @@ void opcontrol()
 			else
 			{
 				flywheelOnTarget = false;
-			}*/
-			flywheel.move_voltage(12000);
+			}
+			//flywheel.move_voltage(12000);
 			//std::cout << flywheel.get_actual_velocity() << "\n";
 		}
 		else
@@ -146,7 +146,6 @@ void opcontrol()
 			holdCapScraperRequested = true;
 			holdCapScraperPos();
 		}
-		std::cout << "vel: " << flywheel.get_actual_velocity() << "\n";
 		//std::cout << "onTarget" << flywheelOnTarget << "\n";
 		//std::cout << flywheelShotDetected << "\n";
 		pros::delay(20);

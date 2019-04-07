@@ -218,7 +218,7 @@ void driveRampUp(char dir, float inches)
 
   //Tolerance Variables Here//
   int speedTolerance = 10;
-  int positionTolerance = 30;
+  int positionTolerance = 20;
 
   //Deadbands//
   int speedDeadband = 2500;
@@ -251,14 +251,14 @@ void driveRampUp(char dir, float inches)
       driveSpeed = speedDeadband;
     }
 
-    if (isBetween(abs(lastDriveSpeed), 0, speedDeadband + 3000))
+    /* if (isBetween(abs(lastDriveSpeed), 0, speedDeadband + 3000))
     {
       increaseFactor = .3;
     }
     else
     {
       increaseFactor = .8;
-    }
+    }*/
 
     if (driveSpeed > 0 && lastDriveSpeed >= 0 && driveSpeed > lastDriveSpeed)
     {
