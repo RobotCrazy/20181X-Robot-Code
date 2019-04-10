@@ -196,6 +196,7 @@ void driveRampUp(char dir, float inches)
   int ticks = (int)((inches / (PI * WHEEL_RADIUS)) * 180);
   int maxAngleCorrectionFactor = 100;
   int angleCorrectionFactor = 40;
+  float velocityCorrectionFactor = 40;
   float angleCorrectionFactorD = 2;
   int startingAngle = globalTargetAngle;
 
@@ -211,14 +212,15 @@ void driveRampUp(char dir, float inches)
   float lastDriveSpeed = 0;
   int angleError = 0;
   int lastAngleError = 0;
+  float velocityError = 0;
 
   //Constants here//
   float kp = 24;
   float increaseFactor = .3;
 
   //Tolerance Variables Here//
-  int speedTolerance = 10;
-  int positionTolerance = 20;
+  int speedTolerance = 6;
+  int positionTolerance = 15;
 
   //Deadbands//
   int speedDeadband = 2500;
@@ -236,10 +238,11 @@ void driveRampUp(char dir, float inches)
   {
     angleError = startingAngle - gyro.get_value();
 
+    velocityError = ((frontRight.get_actual_velocity() + backRight.get_actual_velocity()) / 2) -
+                    ((frontLeft.get_actual_velocity() + backLeft.get_actual_velocity()) / 2);
+
     error = ticks - ((frontRight.get_position() + backRight.get_position() + frontLeft.get_position() + backLeft.get_position()) / 4);
-    if ((error < 0 && error > -200) || (error > 0 && error < 200))
-    {
-    }
+
     driveSpeed = error * kp;
 
     if (isBetween(driveSpeed, -1 * speedDeadband, 0))
@@ -251,25 +254,16 @@ void driveRampUp(char dir, float inches)
       driveSpeed = speedDeadband;
     }
 
-    /* if (isBetween(abs(lastDriveSpeed), 0, speedDeadband + 3000))
-    {
-      increaseFactor = .3;
-    }
-    else
-    {
-      increaseFactor = .8;
-    }*/
-
     if (driveSpeed > 0 && lastDriveSpeed >= 0 && driveSpeed > lastDriveSpeed)
     {
-      setLeftDrive(lastDriveSpeed + increaseFactor + ((angleError * angleCorrectionFactor) + ((angleError - lastAngleError) * angleCorrectionFactorD)));
-      setRightDrive(lastDriveSpeed + increaseFactor - ((angleError * angleCorrectionFactor) + ((angleError - lastAngleError) * angleCorrectionFactorD)));
+      setLeftDrive(lastDriveSpeed + increaseFactor + ((angleError * angleCorrectionFactor) + ((angleError - lastAngleError) * angleCorrectionFactorD)) + (velocityError * velocityCorrectionFactor));
+      setRightDrive(lastDriveSpeed + increaseFactor - ((angleError * angleCorrectionFactor) + ((angleError - lastAngleError) * angleCorrectionFactorD)) - (velocityError * velocityCorrectionFactor));
       lastDriveSpeed += increaseFactor;
     }
     else if (driveSpeed < 0 && lastDriveSpeed <= 0 && driveSpeed < lastDriveSpeed)
     {
-      setLeftDrive(lastDriveSpeed - increaseFactor + ((angleError * angleCorrectionFactor) + ((angleError - lastAngleError) * angleCorrectionFactorD)));
-      setRightDrive(lastDriveSpeed - increaseFactor - ((angleError * angleCorrectionFactor) + ((angleError - lastAngleError) * angleCorrectionFactorD)));
+      setLeftDrive(lastDriveSpeed - increaseFactor + ((angleError * angleCorrectionFactor) + ((angleError - lastAngleError) * angleCorrectionFactorD)) + (velocityError * velocityCorrectionFactor));
+      setRightDrive(lastDriveSpeed - increaseFactor - ((angleError * angleCorrectionFactor) + ((angleError - lastAngleError) * angleCorrectionFactorD)) - (velocityError * velocityCorrectionFactor));
       lastDriveSpeed -= increaseFactor;
     }
     else
@@ -355,10 +349,12 @@ void driveShootAsync(char dir, float inches, int distance1, int distance2)
 
 void turnToTarget(float targetAngle, int maxSpeed)
 {
-  float kp = 20;
+  float kp = 19;
+  float kd = 3;
   float scaledAngle = targetAngle * GYRO_SCALE;
   globalTargetAngle = scaledAngle * 10;
   int error = (scaledAngle * 10.0) - gyro.get_value();
+  int lastError = 0;
   int driveSpeed = error * kp;
   int tolerance = 10;
   int speedTolerance = 5;
@@ -369,20 +365,22 @@ void turnToTarget(float targetAngle, int maxSpeed)
          frontLeft.get_actual_velocity() > speedTolerance ||
          backLeft.get_actual_velocity() > speedTolerance)
   {
-    if (isBetween(driveSpeed, -2000, 0))
+    if (isBetween(driveSpeed, -1500, 0))
     {
-      driveSpeed = -2000;
+      driveSpeed = -1500;
     }
-    if (isBetween(driveSpeed, 0, 2000))
+    if (isBetween(driveSpeed, 0, 1500))
     {
-      driveSpeed = 2000;
+      driveSpeed = 1500;
     }
 
     setRightDrive(driveSpeed * -1);
     setLeftDrive(driveSpeed);
 
     error = (scaledAngle * 10) - gyro.get_value();
-    driveSpeed = error * kp;
+    driveSpeed = (error * kp) + ((error - lastError) * kd);
+
+    lastError = error;
   }
   setRightDrive(0);
   setLeftDrive(0);

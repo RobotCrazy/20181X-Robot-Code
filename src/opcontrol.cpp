@@ -45,6 +45,8 @@ void opcontrol()
 	int capScraperTargetPos = 0;
 	float flywheelSpeed = 0;
 
+	bool firstShotDetection = false;
+
 	while (true)
 	{
 		//std::cout << "Sonar: " << intakeSonar.get_value() << "\n";
@@ -59,7 +61,7 @@ void opcontrol()
 		{
 			intake.move_velocity(200);
 			indexer.move_velocity(0);
-			indexer.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_HOLD);
+			indexer.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_BRAKE);
 		}
 		else if (master.get_digital(DIGITAL_L1))
 		{
@@ -96,15 +98,16 @@ void opcontrol()
 		if (master.get_digital(DIGITAL_R1))
 		{
 			maintainFlywheelSpeedRequested = true;
-			targetFlywheelSpeed = 3000;
-			detectRPMDrop();
-			if (flywheel.get_actual_velocity() > 190)
+			targetFlywheelSpeed = 2475;
+			if (flywheelShotDetected == true)
 			{
-				flywheelOnTarget = true;
-			}
-			else
-			{
-				flywheelOnTarget = false;
+				targetFlywheelSpeed = 1750;
+				if (firstShotDetection == false)
+				{
+					firstShotDetection = true;
+					indexer.move_velocity(0);
+					pros::delay(1000);
+				}
 			}
 			//flywheel.move_voltage(12000);
 			//std::cout << flywheel.get_actual_velocity() << "\n";
@@ -114,6 +117,7 @@ void opcontrol()
 			flywheel.move_voltage(0);
 			flywheel.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_COAST);
 			flywheelOnTarget = false;
+			flywheelShotDetected = false;
 			targetFlywheelSpeed = 0;
 			maintainFlywheelSpeedRequested = false;
 		}

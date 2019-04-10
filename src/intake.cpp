@@ -46,23 +46,7 @@ void monitorIntake(void *param)
   {
     if (intakeUpRequested == true)
     {
-      if (!(isBetween(indexerSonar.get_value(), 50, 80)))
-      {
-        intake.move_velocity(150);
-        indexer.move_velocity(200);
-      }
-      else if (!(isBetween(intakeSonar.get_value(), 30, 80)))
-      {
-        intake.move_velocity(150);
-        indexer.move_velocity(0);
-      }
-      else
-      {
-        indexer.move_velocity(0);
-        intake.move_velocity(0);
-        intake.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_BRAKE);
-        indexer.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_BRAKE);
-      }
+      intake.move_velocity(200);
     }
     else if (prepareShotRequested == true)
     {

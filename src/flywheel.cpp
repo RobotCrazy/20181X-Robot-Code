@@ -78,7 +78,13 @@ float estimateFlywheelVoltage(float targetVelocity) //Fix this to be in terms of
   }
   else
   {*/
-  return 10000;
+
+  if (targetFlywheelSpeed == 2475)
+  {
+    return 9000;
+  }
+  else
+    return 6000;
   //}
 }
 
@@ -92,6 +98,28 @@ double averagePrevVelocity()
   average /= 20;
   return average;
 }
+void setPrevVals(double newVelocity)
+{
+  //std::cout << "new Velocity: " << newVelocity;
+  //if (abs(averagePrevVelocity() - newVelocity) < 200)
+  //{
+  for (int i = 1; i < 20; i++)
+  {
+    prevVelocities[i - 1] = prevVelocities[i];
+  }
+  prevVelocities[19] = newVelocity;
+  //}
+}
+
+double getScaledFlywheelVelocity()
+{
+  return (flywheel.get_actual_velocity() * flywheelGearingFactor);
+}
+
+double getNewestFlywheelVelocity()
+{
+  return averagePrevVelocity();
+}
 
 /**
  * This function is used to detect a major drop in rpm in the flywheel 
@@ -101,7 +129,7 @@ void detectRPMDrop()
 {
   if (flywheelOnTarget == true)
   {
-    if (flywheel.get_actual_velocity() < (targetFlywheelSpeed - 4))
+    if (getScaledFlywheelVelocity() < (targetFlywheelSpeed - 100))
     {
       flywheelShotDetected = true;
     }
@@ -110,7 +138,19 @@ void detectRPMDrop()
       flywheelShotDetected = false;
     }
   }
-  //flywheelShotDetected = false;
+}
+
+bool checkFlywheelOnTarget()
+{
+  double flywheelVelocity = getScaledFlywheelVelocity();
+  if (flywheelVelocity > 2700)
+  {
+    return true;
+  }
+  else
+  {
+    return false;
+  }
 }
 
 /******************************Flywheel Status Handling Task**********************************/
@@ -119,16 +159,12 @@ void maintainFlywheelSpeed(void *param)
 {
 
   //Constants//
-  double kp = .6;
-  double ki = .3;
+  double kp = 2;
+  double ki = .1;
   double kd = 0;
 
   //PID Variables Here//
-  double currentVelocity = flywheel.get_actual_velocity() * flywheelGearingFactor;
-  float lastVelocity1 = 0;
-  float lastVelocity2 = 0;
-  float lastVelocity3 = 0;
-  float averageVelocity = 0;
+  double currentVelocity = getNewestFlywheelVelocity();
   double error = targetFlywheelSpeed - currentVelocity;
   double lastError = 0;
   double totalError = 0;
@@ -137,35 +173,86 @@ void maintainFlywheelSpeed(void *param)
   double integral = 0;
 
   int onTargetCount = 0;
-
-  //Temp Variable//
-  int deltaTime = 0;
+  bool inActiveZone = false;
+  bool firstVelocityError = false;
 
   while (true)
   {
     if (maintainFlywheelSpeedRequested == true)
     {
-      currentVelocity = flywheel.get_actual_velocity() * flywheelGearingFactor;
+      setPrevVals(getScaledFlywheelVelocity());
+      currentVelocity = getNewestFlywheelVelocity(); //velocity of final velocity scaled with physical
+      //gearing
       error = targetFlywheelSpeed - currentVelocity;
       proportional = error * kp;
 
-      if (abs(error) > integralActiveZone)
+      if (abs(error) > integralActiveZone) //Out of its active zone
       {
-        totalError = estimateFlywheelVoltage(targetFlywheelSpeed) / ki;
+        inActiveZone = false;
+        if (currentVelocity < targetFlywheelSpeed)
+        {
+          totalError = 12000 / ki;
+        }
+        else if (currentVelocity > targetFlywheelSpeed)
+        {
+          totalError = 1;
+        }
       }
-      else
+      else //In its active zone
       {
+        if (inActiveZone == false)
+        {
+          inActiveZone = true;
+          totalError = estimateFlywheelVoltage(targetFlywheelSpeed) / ki;
+        }
         totalError += error;
+        if (totalError * ki > 12000)
+        {
+          totalError = 12000.0 / ki;
+        }
       }
 
       integral = totalError * ki;
       currentFlywheelVoltage = proportional + integral;
 
-      std::cout << "vel: " << currentVelocity << "   e: " << error
-                << "   p: " << proportional << "   i: " << integral << "    volt: "
-                << currentFlywheelVoltage << "\n\n";
-
       flywheel.move_voltage(currentFlywheelVoltage);
+
+      if (flywheelShotDetected == false)
+      {
+        detectRPMDrop();
+      }
+
+      if (abs(error) < 80)
+      {
+        onTargetCount += 1;
+        if (onTargetCount >= 15)
+        {
+          flywheelOnTarget = true;
+        }
+        else
+        {
+          flywheelOnTarget = false;
+        }
+      }
+      else
+      {
+        if (firstVelocityError == false)
+        {
+          firstVelocityError = true;
+          onTargetCount++;
+        }
+        else
+        {
+          firstVelocityError = false;
+          flywheelOnTarget = false;
+          onTargetCount = 0;
+        }
+      }
+
+      std::cout << "vel: " << currentVelocity << "   e: " << error << "   tE: " << totalError
+                << "   p: " << proportional << "   i: " << integral << "    volt: "
+                << currentFlywheelVoltage << "    targ: " << flywheelOnTarget << "   co: " << onTargetCount
+                << "    drop: " << flywheelShotDetected << "   targSp: " << targetFlywheelSpeed << "\n\n";
     }
 
     else if (runFlywheelAtVoltageRequested == true)
@@ -199,15 +286,15 @@ void shootWhenReady(int requiredSpeed, int intakeTicks, bool stopFlywheelOnFinis
 {
   if (flywheelAutoVelControl == true)
   {
-    while (flywheel.get_actual_velocity() < requiredSpeed ||
-           flywheel.get_actual_velocity() > requiredSpeed > 5)
+    while (getScaledFlywheelVelocity() < requiredSpeed ||
+           getScaledFlywheelVelocity() > requiredSpeed > 5)
     {
       pros::delay(2);
     }
   }
   else
   {
-    while (flywheel.get_actual_velocity() < requiredSpeed)
+    while (getScaledFlywheelVelocity() < requiredSpeed)
     {
       pros::delay(2);
     }
@@ -237,9 +324,10 @@ void shootWhenReady(int intakeTicks, bool stopFlywheelOnFinish)
   {
     pros::delay(2);
   }
-  pros::lcd::print(4, "Speed: %d", flywheel.get_actual_velocity());
+  pros::lcd::print(4, "Speed: %d", getScaledFlywheelVelocity());
   intakeMonitor.suspend();
   indexer.move_relative(intakeTicks, 200);
+  intake.move_relative(intakeTicks, 200);
   pros::delay(500);
   intakeMonitor.resume();
   if (stopFlywheelOnFinish)

@@ -161,12 +161,11 @@ void testAuto()
 {
   //moveCapScorer(480);
   startIntake();
-  pros::delay(2000);
-  for (int i = 0; i < 5; i++)
-  {
-    driveRampUp('f', 30);
-    driveRampUp('b', 30);
-  }
+  startFlywheel(2800);
+  driveRampUp('f', 25);
+  driveRampUp('b', 26.5);
+  turnToTarget(-90, 100);
+  driveRampUp('f', 30);
 
   //Red Cross Court Shooting//
   /*startFlywheel(188);
