@@ -99,7 +99,8 @@ void opcontrol()
 		{
 			maintainFlywheelSpeedRequested = true;
 			targetFlywheelSpeed = 2475;
-			if (flywheelShotDetected == true)
+
+			/*if (flywheelShotDetected == true)
 			{
 				targetFlywheelSpeed = 1750;
 				if (firstShotDetection == false)
@@ -108,7 +109,7 @@ void opcontrol()
 					indexer.move_velocity(0);
 					pros::delay(1000);
 				}
-			}
+		}*/
 			//flywheel.move_voltage(12000);
 			//std::cout << flywheel.get_actual_velocity() << "\n";
 		}
@@ -152,6 +153,6 @@ void opcontrol()
 		}
 		//std::cout << "onTarget" << flywheelOnTarget << "\n";
 		//std::cout << flywheelShotDetected << "\n";
-		pros::delay(20);
+		pros::delay(10);
 	}
 }

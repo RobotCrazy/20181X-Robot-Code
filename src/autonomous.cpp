@@ -160,13 +160,12 @@ vex::vision vision1(vex::PORT1, 50, BLUEFLAG, REDFLAG, SIG_3, SIG_4, SIG_5, SIG_
 void testAuto()
 {
   //moveCapScorer(480);
+  startFlywheel(2440);
   startIntake();
-  startFlywheel(2800);
   driveRampUp('f', 25);
-  driveRampUp('b', 26.5);
-  turnToTarget(-90, 100);
-  driveRampUp('f', 30);
-
+  driveRampUp('b', 5);
+  turnToTarget(-54, 100);
+  shootWhenReady(700, true);
   //Red Cross Court Shooting//
   /*startFlywheel(188);
   startIntake();
@@ -298,25 +297,12 @@ void auto2() //Blue Back (Slot 2)
 
 void auto3() //Red Front (Slot 3)
 {
-  startFlywheel(190);
   startIntake();
-  driveRampUp('f', 35);
-  drive('b', 5);
-  driveRampUp('b', 31);
-  turnToTarget(-88, 100);
-  drive('f', 10);
-  shootWhenReady(180, 1000, false);
-  drive('f', 19);
-  shootWhenReady(180, 1000, true);
-  setGlobalTargetAngle(-98);
-  drive('f', 18.5);
-  driveRampUp('b', 26);
-  turnToTarget(-176, 100);
-  drive('b', 3);
-  moveCapScorer(480);
-  stopIntake();
-  turnToTarget(-210.5, 100);
-  drive('b', 47);
+  startFlywheel(2800);
+  driveRampUp('f', 25);
+  driveRampUp('b', 26.5);
+  turnToTarget(-90, 100);
+  driveRampUp('f', 30);
 }
 
 void auto4() //Red Back (Slot 4)

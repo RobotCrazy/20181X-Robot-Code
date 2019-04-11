@@ -59,7 +59,7 @@ void initialize()
 
 	pros::Controller master(CONTROLLER_MASTER);
 
-	autonSelector();
+	//autonSelector();
 }
 
 /**

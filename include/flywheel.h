@@ -35,6 +35,7 @@ extern void setFlywheelTargetSpeed(int speed);
 extern float estimateFlywheelVoltage(float targetVelocity);
 extern double averagePrevVelocity();
 extern void detectRPMDrop(int newSpeed);
+extern double getScaledFlywheelVelocity();
 
 /******************************Flywheel Status Handling Task**********************************/
 extern char *parameter3;
