@@ -5,10 +5,10 @@
 
 #define INTAKE_PORT 14
 #define INDEXER_PORT 16
-#define INTAKE_SONAR_PORT_PING 'C'
-#define INTAKE_SONAR_PORT_ECHO 'D'
-#define INDEXER_SONAR_PORT_PING 'A'
-#define INDEXER_SONAR_PORT_ECHO 'B'
+#define INTAKE_SONAR_PORT_PING 'A'
+#define INTAKE_SONAR_PORT_ECHO 'B'
+#define INDEXER_SONAR_PORT_PING 'G' //Orange Cable
+#define INDEXER_SONAR_PORT_ECHO 'H' //Yellow Cable
 
 extern pros::Motor intake;
 extern pros::Motor indexer;

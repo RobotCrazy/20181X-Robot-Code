@@ -159,13 +159,22 @@ vex::vision vision1(vex::PORT1, 50, BLUEFLAG, REDFLAG, SIG_3, SIG_4, SIG_5, SIG_
 }*/
 void testAuto()
 {
+  startFlywheel(2475);
+
+  startIntake();
+  pros::delay(6000);
+  for (int i = 0; i < 20; i++)
+  {
+    shootWhenReady(800, false);
+    pros::delay(500);
+  }
   //moveCapScorer(480);
-  startFlywheel(2440);
+  /*startFlywheel(2440);
   startIntake();
   driveRampUp('f', 25);
   driveRampUp('b', 5);
   turnToTarget(-54, 100);
-  shootWhenReady(700, true);
+  shootWhenReady(700, true);*/
   //Red Cross Court Shooting//
   /*startFlywheel(188);
   startIntake();

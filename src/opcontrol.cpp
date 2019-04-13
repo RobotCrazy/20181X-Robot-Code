@@ -47,6 +47,8 @@ void opcontrol()
 
 	bool firstShotDetection = false;
 
+	bool flywheelVelocitySet = false;
+
 	while (true)
 	{
 		//std::cout << "Sonar: " << intakeSonar.get_value() << "\n";
@@ -67,6 +69,24 @@ void opcontrol()
 		{
 			intake.move_velocity(200);
 			indexer.move_velocity(200);
+			if (flywheelVelocitySet == false)
+			{
+				flywheelVelocitySet = true;
+				flywheelStartingVelocity = getScaledFlywheelVelocity();
+			}
+
+			if (master.get_digital(DIGITAL_R1))
+			{
+				detectRPMDrop();
+			}
+			if (flywheelShotDetected == true)
+			{
+				flywheelShotDetected = false;
+				intake.move_velocity(0);
+				indexer.move_velocity(0);
+				flywheelStartingVelocity = 0;
+				pros::delay(300);
+			}
 		}
 		else if (master.get_digital(DIGITAL_R2))
 		{
@@ -78,6 +98,8 @@ void opcontrol()
 		}
 		else
 		{
+			flywheelStartingVelocity = 0;
+			flywheelVelocitySet = false;
 			intake.move_velocity(0);
 			indexer.move_velocity(0);
 		}
@@ -97,8 +119,10 @@ void opcontrol()
 
 		if (master.get_digital(DIGITAL_R1))
 		{
-			maintainFlywheelSpeedRequested = true;
-			targetFlywheelSpeed = 2475;
+			if (flywheelShotDetected == false)
+			{
+				startFlywheel(2475);
+			}
 
 			/*if (flywheelShotDetected == true)
 			{
@@ -121,7 +145,11 @@ void opcontrol()
 			flywheelShotDetected = false;
 			targetFlywheelSpeed = 0;
 			maintainFlywheelSpeedRequested = false;
+			stopFlywheel();
 		}
+
+		std::cout << getScaledFlywheelVelocity() << "   drop: " << flywheelShotDetected
+							<< "   targVolt: " << targetFlywheelVoltage << "\n";
 
 		if (flywheel.get_actual_velocity() <= 164 && firePrinted == false)
 		{
@@ -153,6 +181,7 @@ void opcontrol()
 		}
 		//std::cout << "onTarget" << flywheelOnTarget << "\n";
 		//std::cout << flywheelShotDetected << "\n";
+		//std::cout << indexerSonar.get_value() << "   intake: " << intakeSonar.get_value() << "\n";
 		pros::delay(10);
 	}
 }
