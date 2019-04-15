@@ -59,14 +59,14 @@ void monitorIntake(void *param)
       {
         intake.move_velocity(0);
         indexer.move_velocity(0);
-        indexer.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_BRAKE);
+        indexer.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_HOLD);
       }
     }
     else if (intakeOutRequested == true)
     {
       intake.move_velocity(-200);
       indexer.move_velocity(0);
-      indexer.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_BRAKE);
+      indexer.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_HOLD);
     }
     else if (shootBallRequested == true)
     {
@@ -76,7 +76,7 @@ void monitorIntake(void *param)
     {
       intake.move_velocity(0);
       indexer.move_velocity(0);
-      indexer.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_BRAKE);
+      indexer.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_HOLD);
     }
     pros::delay(5);
   }

@@ -349,7 +349,7 @@ void driveShootAsync(char dir, float inches, int distance1, int distance2)
 
 void turnToTarget(float targetAngle, int maxSpeed)
 {
-  float kp = 19;
+  float kp = 16;
   float kd = 3;
   float scaledAngle = targetAngle * GYRO_SCALE;
   globalTargetAngle = scaledAngle * 10;

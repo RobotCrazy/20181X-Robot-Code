@@ -66,29 +66,6 @@ void alignToFlag()
   setLeftDrive(0);
 }
 
-void moveCapScorer(int pos)
-{
-  int error = pos - capScraper.get_position();
-  float speed = 10000;
-  //targetcapScraperPos = pos;
-  while (abs(error) > 50)
-  {
-    error = pos - capScraper.get_position();
-    capScraper.move_voltage(speed);
-    std::cout << capScraper.get_position() << "\n";
-    pros::delay(20);
-  }
-  capScraper.move(0);
-  capScraper.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_HOLD);
-  /*while (true)
-  {
-    error = pos - capScraper.get_position();
-    std::cout << error << "\n;";
-  }*/
-  std::cout
-      << "Done cap scoring";
-}
-
 /**
  * Runs the user autonomous code. This function will be started in its own task
  * with the default priority and stack size whenever the robot is enabled via
@@ -159,22 +136,28 @@ vex::vision vision1(vex::PORT1, 50, BLUEFLAG, REDFLAG, SIG_3, SIG_4, SIG_5, SIG_
 }*/
 void testAuto()
 {
-  startFlywheel(2475);
+  // startFlywheel(2650);
 
-  startIntake();
-  pros::delay(6000);
-  for (int i = 0; i < 20; i++)
-  {
-    shootWhenReady(800, false);
-    pros::delay(500);
-  }
+  // startIntake();
+  // pros::delay(2000);
+  // stopIntake();
+  // for (int i = 0; i < 20; i++)
+  // {
+  //   shootWhenReady(800, false);
+  //   pros::delay(500);
+  // }
+
   //moveCapScorer(480);
-  /*startFlywheel(2440);
-  startIntake();
-  driveRampUp('f', 25);
-  driveRampUp('b', 5);
-  turnToTarget(-54, 100);
-  shootWhenReady(700, true);*/
+  //startFlywheel(2440);
+
+  // startFlywheel(2650);
+  // startIntake();
+  // driveRampUp('f', 25);
+  // driveRampUp('b', 5);
+  // stopIntake();
+  // turnToTarget(-54.25, 100);
+  // shootWhenReady(700, true);
+
   //Red Cross Court Shooting//
   /*startFlywheel(188);
   startIntake();
@@ -307,11 +290,18 @@ void auto2() //Blue Back (Slot 2)
 void auto3() //Red Front (Slot 3)
 {
   startIntake();
-  startFlywheel(2800);
+  startFlywheel(2475);
   driveRampUp('f', 25);
+  stopIntake();
   driveRampUp('b', 26.5);
-  turnToTarget(-90, 100);
-  driveRampUp('f', 30);
+  turnToTarget(-88.5, 100);
+  shootWhenReady(2400, 700, false);
+  startIntake();
+  driveRampUp('f', 20);
+  stopIntake();
+  shootWhenReady(2400, 700, true);
+  moveCapScorer(-125);
+  driveRampUp('f', 18);
 }
 
 void auto4() //Red Back (Slot 4)
@@ -448,7 +438,7 @@ void autonomous()
   //pros::Task flywheelRPMMonitor(maintainFlywheelSpeed, parameter3, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Flywheel speed task");
   //pros::Task intakeMonitor(monitorIntake, parameter2, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Intake auto movement task");
 
-  autoMode = 0;
+  autoMode = 3;
   if (autoMode == 1)
   {
     auto1();

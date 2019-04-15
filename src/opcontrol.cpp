@@ -45,10 +45,6 @@ void opcontrol()
 	int capScraperTargetPos = 0;
 	float flywheelSpeed = 0;
 
-	bool firstShotDetection = false;
-
-	bool flywheelVelocitySet = false;
-
 	while (true)
 	{
 		//std::cout << "Sonar: " << intakeSonar.get_value() << "\n";
@@ -69,24 +65,6 @@ void opcontrol()
 		{
 			intake.move_velocity(200);
 			indexer.move_velocity(200);
-			if (flywheelVelocitySet == false)
-			{
-				flywheelVelocitySet = true;
-				flywheelStartingVelocity = getScaledFlywheelVelocity();
-			}
-
-			if (master.get_digital(DIGITAL_R1))
-			{
-				detectRPMDrop();
-			}
-			if (flywheelShotDetected == true)
-			{
-				flywheelShotDetected = false;
-				intake.move_velocity(0);
-				indexer.move_velocity(0);
-				flywheelStartingVelocity = 0;
-				pros::delay(300);
-			}
 		}
 		else if (master.get_digital(DIGITAL_R2))
 		{
@@ -98,8 +76,6 @@ void opcontrol()
 		}
 		else
 		{
-			flywheelStartingVelocity = 0;
-			flywheelVelocitySet = false;
 			intake.move_velocity(0);
 			indexer.move_velocity(0);
 		}
@@ -119,10 +95,7 @@ void opcontrol()
 
 		if (master.get_digital(DIGITAL_R1))
 		{
-			if (flywheelShotDetected == false)
-			{
-				startFlywheel(2475);
-			}
+			startFlywheel(2475);
 
 			/*if (flywheelShotDetected == true)
 			{
@@ -148,9 +121,6 @@ void opcontrol()
 			stopFlywheel();
 		}
 
-		std::cout << getScaledFlywheelVelocity() << "   drop: " << flywheelShotDetected
-							<< "   targVolt: " << targetFlywheelVoltage << "\n";
-
 		if (flywheel.get_actual_velocity() <= 164 && firePrinted == false)
 		{
 			master.print(0, 0, "Fire");
@@ -164,21 +134,23 @@ void opcontrol()
 
 		if (master.get_digital(DIGITAL_UP))
 		{
-			capScraper.move_velocity(200);
+			capScraper.move(127);
 			capScraperTargetPos = capScraper.get_position();
 			holdCapScraperRequested = false;
 		}
 		else if (master.get_digital(DIGITAL_DOWN))
 		{
-			capScraper.move_velocity(-125);
+			capScraper.move(-90);
 			capScraperTargetPos = capScraper.get_position();
 			holdCapScraperRequested = false;
 		}
 		else
 		{
 			holdCapScraperRequested = true;
-			holdCapScraperPos();
+			holdCapScraperPos(capScraperTargetPos);
 		}
+
+		//std::cout << capScraper.get_position() << "   " << capScraperTargetPos << "\n";
 		//std::cout << "onTarget" << flywheelOnTarget << "\n";
 		//std::cout << flywheelShotDetected << "\n";
 		//std::cout << indexerSonar.get_value() << "   intake: " << intakeSonar.get_value() << "\n";
