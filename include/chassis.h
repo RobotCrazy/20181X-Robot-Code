@@ -31,11 +31,13 @@ extern double wheelCircumference;
 extern void setRightDrive(int voltage);
 extern void setLeftDrive(int voltage);
 extern void setGlobalTargetAngle(int newAngle);
+extern float getRotationalVelocity();
 
 /****************************Chassis Autonomous Movement Functions*********************************/
 extern void drive(char dir, float inches, int driveSpeed);
 extern void drive(char dir, float inches);
 extern void driveRampUp(char dir, float inches);
+extern void driveRampUp(char dir, float inches, int speedTol, int posTol);
 extern void driveShootAsync(char dir, float inches, int distance1, int distance2);
 extern void turnToTarget(float targetAngle, int maxSpeed);
 //extern void climbPlatform(float maxInches);

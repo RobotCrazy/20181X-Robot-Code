@@ -38,15 +38,37 @@ void stopIntake()
   intakeOutRequested = false;
 }
 
+bool intakeBallDetected()
+{
+  return (isBetween(intakeSonar.get_value(), 50, 100));
+}
+
 /********************************Intake status handling task************************************/
 char *parameter2;
 void monitorIntake(void *param)
 {
+  int ballDetectedCount = 0;
   while (true)
   {
     if (intakeUpRequested == true)
     {
-      intake.move_velocity(200);
+      if (intakeBallDetected() == true)
+      {
+        ballDetectedCount += 1;
+        if (ballDetectedCount >= 40)
+        {
+          intake.move_velocity(0);
+        }
+        else
+        {
+          intake.move_velocity(200);
+        }
+      }
+      else
+      {
+        ballDetectedCount = 0;
+        intake.move_velocity(200);
+      }
     }
     else if (prepareShotRequested == true)
     {

@@ -273,6 +273,44 @@ void shootWhenReady(int requiredSpeed, int intakeTicks, bool stopFlywheelOnFinis
   }
 }
 
+void shootWhenBallReady(int requiredSpeed, int intakeTicks, bool stopFlywheelOnFinish)
+{
+
+  while (getScaledFlywheelVelocity() < requiredSpeed)
+  {
+    pros::delay(2);
+  }
+  intakeMonitor.suspend();
+  indexer.move_relative(intakeTicks, 200);
+  pros::delay(500);
+  intakeMonitor.resume();
+  if (stopFlywheelOnFinish)
+  {
+    stopFlywheel();
+  }
+}
+
+void shootWhenReady(int requiredSpeed, int intakeTicks, bool stopFlywheelOnFinish, bool spinBothIntakes)
+{
+
+  while (getScaledFlywheelVelocity() < requiredSpeed)
+  {
+    pros::delay(2);
+  }
+  intakeMonitor.suspend();
+  indexer.move_relative(intakeTicks, 200);
+  if (spinBothIntakes == true)
+  {
+    intake.move_relative(intakeTicks, 200);
+  }
+  pros::delay(500);
+  intakeMonitor.resume();
+  if (stopFlywheelOnFinish)
+  {
+    stopFlywheel();
+  }
+}
+
 /**
  * This function shoots the ball by spinning the indexer once the flywheel speed monitor has 
  * determined that the speed is correct.

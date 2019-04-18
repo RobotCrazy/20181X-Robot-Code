@@ -13,7 +13,10 @@ extern bool holdCapScraperRequested;
 //extern const int capScraperMaxPos = 20; //Maximum height for cap scraper
 //extern const int capScraperMinPos = 200;
 
+extern void setCapScraperTargetPos(int targetPos);
 extern void holdCapScraperPos(int targetPos);
 extern void moveCapScorer(int targetPos);
+extern void holdScraperPos(void *parameter);
+extern pros::Task capScraperAutonHold;
 
 #endif

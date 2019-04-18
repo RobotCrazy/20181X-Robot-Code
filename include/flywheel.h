@@ -46,5 +46,6 @@ extern pros::Task flywheelRPMMonitor;
 /********************************Flywheel Autonomous Movement***********************************/
 extern void shootWhenReady(int requiredSpeed, int intakeTicks, bool stopFlywheelOnFinish);
 extern void shootWhenReady(int intakeTicks, bool stopFlywheelOnFinish);
+extern void shootWhenReady(int requiredSpeed, int intakeTicks, bool stopFlywheelOnFinish, bool spinBothIntakes);
 
 #endif

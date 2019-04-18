@@ -3,12 +3,16 @@
 
 pros::Motor capScraper(CAP_SCRAPER_PORT);
 
-int capScraperTargetPos;
+int capScraperTargetPos = 0;
 bool holdCapScraperRequested = false;
 
 //const int capScraperMaxPos = 20; //Maximum height for cap scraper
 //const int capScraperMinPos = 200;
 
+void setCapScraperTargetPos(int targetPos)
+{
+  capScraperTargetPos = targetPos;
+}
 void holdCapScraperPos(int targetPos)
 {
   int error = targetPos - capScraper.get_position();
@@ -30,14 +34,39 @@ void holdCapScraperPos(int targetPos)
 void moveCapScorer(int targetPos)
 {
   int error = targetPos - capScraper.get_position();
-  int tolerance = 30;
+  int tolerance = 10;
   float kp = 1;
+  setCapScraperTargetPos(targetPos);
   while (abs(error) > tolerance)
   {
+    error = targetPos - capScraper.get_position();
     capScraper.move_velocity(error * kp);
+    std::cout << error << "\n";
+    pros::delay(1);
   }
   capScraper.move_velocity(0);
-  capScraper.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_HOLD);
 
   std::cout << "Done cap scoring";
 }
+
+char *param4;
+void holdCapScraperPosInAuton(void *parameter)
+{
+  int error = capScraperTargetPos - capScraper.get_position();
+  int kp = 1;
+  while (true)
+  {
+    error = capScraperTargetPos - capScraper.get_position();
+    if (abs(error) > 20)
+    {
+      capScraper.move_velocity(error * kp);
+    }
+    else
+    {
+      capScraper.move_velocity(0);
+    }
+
+    pros::delay(20);
+  }
+}
+pros::Task capScraperAutonHold(holdCapScraperPosInAuton, param4, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Autonomous Scraper Hold Pos Task");

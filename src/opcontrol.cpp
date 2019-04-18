@@ -45,6 +45,10 @@ void opcontrol()
 	int capScraperTargetPos = 0;
 	float flywheelSpeed = 0;
 
+	int doubleShotStartTime = 0;
+	bool doubleShotInitiated = false;
+	const int doubleShotDelayTime = 100;
+
 	while (true)
 	{
 		//std::cout << "Sonar: " << intakeSonar.get_value() << "\n";
@@ -55,7 +59,24 @@ void opcontrol()
 		frontRight.move(rightDrive);
 		backRight.move(rightDrive);
 
-		if (master.get_digital(DIGITAL_L2))
+		if (master.get_digital(DIGITAL_R2) && master.get_digital(DIGITAL_R1))
+		{
+			if (doubleShotInitiated == false)
+			{
+				doubleShotInitiated = true;
+				stopFlywheel();
+				doubleShotStartTime = pros::millis();
+			}
+			else
+			{
+				if (pros::millis() - doubleShotStartTime >= doubleShotDelayTime)
+				{
+					intake.move_velocity(200);
+					indexer.move_velocity(200);
+				}
+			}
+		}
+		else if (master.get_digital(DIGITAL_L2))
 		{
 			intake.move_velocity(200);
 			indexer.move_velocity(0);
@@ -68,7 +89,7 @@ void opcontrol()
 		}
 		else if (master.get_digital(DIGITAL_R2))
 		{
-			intake.move_velocity(-200);
+			intake.move_velocity(200);
 		}
 		else if (master.get_digital(DIGITAL_A))
 		{
@@ -78,6 +99,8 @@ void opcontrol()
 		{
 			intake.move_velocity(0);
 			indexer.move_velocity(0);
+			doubleShotInitiated = false;
+			doubleShotStartTime = 0;
 		}
 
 		if (master.get_digital(DIGITAL_X))
@@ -93,7 +116,7 @@ void opcontrol()
 			driveBaseTargetSet = false;
 		}
 
-		if (master.get_digital(DIGITAL_R1))
+		if ((master.get_digital(DIGITAL_R1) == true) && (doubleShotInitiated == false))
 		{
 			startFlywheel(2475);
 
@@ -150,10 +173,9 @@ void opcontrol()
 			holdCapScraperPos(capScraperTargetPos);
 		}
 
-		//std::cout << capScraper.get_position() << "   " << capScraperTargetPos << "\n";
 		//std::cout << "onTarget" << flywheelOnTarget << "\n";
 		//std::cout << flywheelShotDetected << "\n";
-		//std::cout << indexerSonar.get_value() << "   intake: " << intakeSonar.get_value() << "\n";
+		//std::cout << intakeSonar.get_value() << "\n";
 		pros::delay(10);
 	}
 }

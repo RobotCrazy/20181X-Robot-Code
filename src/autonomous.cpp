@@ -136,6 +136,9 @@ vex::vision vision1(vex::PORT1, 50, BLUEFLAG, REDFLAG, SIG_3, SIG_4, SIG_5, SIG_
 }*/
 void testAuto()
 {
+
+  //startIntake();
+  //driveShootAsync('f', )
   // startFlywheel(2650);
 
   // startIntake();
@@ -289,19 +292,32 @@ void auto2() //Blue Back (Slot 2)
 
 void auto3() //Red Front (Slot 3)
 {
-  startIntake();
-  startFlywheel(2475);
+  capScraper.tare_position();
+  setCapScraperTargetPos(capScraper.get_position());
+  startFlywheel(2600);
   driveRampUp('f', 25);
-  stopIntake();
-  driveRampUp('b', 26.5);
-  turnToTarget(-88.5, 100);
-  shootWhenReady(2400, 700, false);
   startIntake();
-  driveRampUp('f', 20);
+  pros::delay(250);
+  driveRampUp('b', 26.5);
+  turnToTarget(-87.5, 100);
+  shootWhenReady(2550, 700, false);
+  driveRampUp('f', 21);
+  shootWhenReady(2475, 1500, true, true);
   stopIntake();
-  shootWhenReady(2400, 700, true);
-  moveCapScorer(-125);
-  driveRampUp('f', 18);
+  startFlywheel(2400);
+  setCapScraperTargetPos(-130);
+  driveRampUp('f', 7);
+  driveRampUp('b', 28);
+  turnToTarget(-36.5, 100);
+  driveRampUp('f', 15.4);
+  startIntake();
+  moveCapScorer(-225);
+  driveRampUp('b', 8);
+  pros::delay(1000);
+  shootWhenReady(2300, 700, false);
+  startFlywheel(1700);
+  pros::delay(1000);
+  shootWhenReady(1600, 1500, true, true);
 }
 
 void auto4() //Red Back (Slot 4)
