@@ -53,11 +53,11 @@ char *param4;
 void holdCapScraperPosInAuton(void *parameter)
 {
   int error = capScraperTargetPos - capScraper.get_position();
-  int kp = 1;
+  int kp = 2;
   while (true)
   {
     error = capScraperTargetPos - capScraper.get_position();
-    if (abs(error) > 20)
+    if (abs(error) > 10)
     {
       capScraper.move_velocity(error * kp);
     }

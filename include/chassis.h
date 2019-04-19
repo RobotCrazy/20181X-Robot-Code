@@ -38,13 +38,13 @@ extern void drive(char dir, float inches, int driveSpeed);
 extern void drive(char dir, float inches);
 extern void driveRampUp(char dir, float inches);
 extern void driveRampUp(char dir, float inches, int speedTol, int posTol);
-extern void driveShootAsync(char dir, float inches, int distance1, int distance2);
+extern void driveShootAsync(char dir, float inches, int shootDistance);
 extern void turnToTarget(float targetAngle, int maxSpeed);
 //extern void climbPlatform(float maxInches);
 
 /****************************Chassis General Functions**********************************/
 extern void holdDrivePos(int targetPosL, int targetPosR);
-//extern void slewRightDrive(int rightSpeed);
-//extern void slewLeftDrive(int leftSpeed);
+extern void setRightDriveOP(int voltage);
+extern void setLeftDriveOP(int voltage);
 
 #endif

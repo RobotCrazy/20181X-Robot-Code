@@ -40,12 +40,15 @@ extern double getScaledFlywheelVelocity();
 
 /******************************Flywheel Status Handling Task**********************************/
 extern char *parameter3;
-extern void maintainFlywheelSpeed(void *param);
-extern pros::Task flywheelRPMMonitor;
+extern void maintainFlywheelSpeedOP(void *param);
+extern void maintainFlywheelSpeedAuto(void *param);
+extern pros::Task flywheelRPMMonitorOP;
+extern pros::Task flywheelRPMMonitorAuto;
 
 /********************************Flywheel Autonomous Movement***********************************/
 extern void shootWhenReady(int requiredSpeed, int intakeTicks, bool stopFlywheelOnFinish);
 extern void shootWhenReady(int intakeTicks, bool stopFlywheelOnFinish);
 extern void shootWhenReady(int requiredSpeed, int intakeTicks, bool stopFlywheelOnFinish, bool spinBothIntakes);
+extern void rapidFire(int requiredSpeed, int intakeTicks, bool stopFlywheelOnFinish);
 
 #endif

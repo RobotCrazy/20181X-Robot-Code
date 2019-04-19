@@ -134,7 +134,7 @@ void detectRPMDrop()
 
 /******************************Flywheel Status Handling Task**********************************/
 char *parameter3;
-void maintainFlywheelSpeed(void *param)
+void maintainFlywheelSpeedOP(void *param)
 {
 
   //Constants//
@@ -216,12 +216,13 @@ void maintainFlywheelSpeed(void *param)
         flywheelOnTarget = false;
         onTargetCount = 0;
       }
-      //std::cout << currentVelocity << "\n";
+      std::cout << currentVelocity << "\t" << error << "\t" << integral
+                << "\t" << currentFlywheelVoltage << "\n";
       //std::cout << integral << "\n";
-      std::cout << "vel: " << currentVelocity << "   e: " << error << "   tE: " << totalError
-                << "   p: " << proportional << "   i: " << integral << "    volt: "
-                << currentFlywheelVoltage << "    targ: " << flywheelOnTarget << "   co: " << onTargetCount
-                << "    drop: " << flywheelShotDetected << "   targSp: " << targetFlywheelSpeed << "\n\n";
+      // std::cout << "vel: " << currentVelocity << "   e: " << error << "   tE: " << totalError
+      //           << "   p: " << proportional << "   i: " << integral << "    volt: "
+      //           << currentFlywheelVoltage << "    targ: " << flywheelOnTarget << "   co: " << onTargetCount
+      //           << "    drop: " << flywheelShotDetected << "   targSp: " << targetFlywheelSpeed << "\n\n";
 
       /*lastVelocity3 = lastVelocity2;
       lastVelocity2 = lastVelocity1;*/
@@ -243,7 +244,7 @@ void maintainFlywheelSpeed(void *param)
 }
 
 /***************************************Flywhel Status Control Task*******************************/
-pros::Task flywheelRPMMonitor(maintainFlywheelSpeed, parameter3, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Flywheel speed task");
+//pros::Task flywheelRPMMonitorOP(maintainFlywheelSpeedOP, parameter3, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Flywheel speed task");
 
 /********************************Flywheel Autonomous Movement***********************************/
 /**
@@ -336,3 +337,134 @@ void shootWhenReady(int intakeTicks, bool stopFlywheelOnFinish)
     stopFlywheel();
   }
 }
+
+void rapidFire(int requiredSpeed, int intakeTicks, bool stopFlywheelOnFinish)
+{
+
+  while (getScaledFlywheelVelocity() < requiredSpeed)
+  {
+    pros::delay(2);
+  }
+  intakeMonitor.suspend();
+  indexer.move_relative(intakeTicks, 200);
+  intake.move_relative(intakeTicks, 200);
+  pros::delay(500);
+  intakeMonitor.resume();
+  if (stopFlywheelOnFinish)
+  {
+    stopFlywheel();
+  }
+}
+
+/***************************Flywheel Auton Speed Control**************************/
+void maintainFlywheelSpeedAuto(void *param)
+{
+
+  //Constants//
+  double kp = .4;
+  double ki = .008;
+  double kd = .07;
+
+  //PID Variables Here//
+  double currentVelocity = 0; /*emaFilter(getScaledFlywheelVelocity(), lastVelocity1, 0.2)*/
+  double lastVelocity1 = 0;
+  double lastVelocity2 = 0;
+  double lastVelocity3 = 0;
+  double error = targetFlywheelSpeed - currentVelocity;
+  double lastError = 0;
+  double totalError = 0;
+  double integralActiveZone = 300;
+  double proportional = 0;
+  double integral = 0;
+  double derivative = 0;
+  double estimate = 0;
+
+  int onTargetCount = 0;
+  bool inActiveZone = false;
+  bool firstVelocityError = false;
+
+  while (true)
+  {
+    if (maintainFlywheelSpeedRequested == true)
+    {
+      currentVelocity = emaFilter(getScaledFlywheelVelocity(), lastVelocity1, 0.2); //velocity of final velocity scaled with physical gearing
+      //lv_chart_set_next(homeChart, seriesA, currentVelocity);
+      error = targetFlywheelSpeed - currentVelocity;
+      proportional = error * kp;
+      derivative = (error - lastError) * kd;
+      estimate = estimateFlywheelVoltage(targetFlywheelSpeed);
+
+      if (abs(error) > integralActiveZone) //Out of its active zone
+      {
+        totalError = 0;
+        if (currentVelocity < targetFlywheelSpeed)
+        {
+          currentFlywheelVoltage = estimateFlywheelVoltage(targetFlywheelSpeed) + 4000;
+        }
+        else if (currentVelocity > targetFlywheelSpeed)
+        {
+          currentFlywheelVoltage = estimateFlywheelVoltage(targetFlywheelSpeed) - 4000;
+        }
+      }
+      else //In its active zone
+      {
+        totalError += error;
+        integral = totalError * ki;
+        currentFlywheelVoltage = (estimate + proportional + integral + derivative);
+      }
+
+      //currentFlywheelVoltage += proportional; // + integral;
+
+      flywheel.move_voltage(currentFlywheelVoltage);
+
+      /*if (flywheelShotDetected == false)
+      {
+        detectRPMDrop();
+      }*/
+
+      if (abs(error) < 30)
+      {
+        onTargetCount += 1;
+        if (onTargetCount >= 30)
+        {
+          flywheelOnTarget = true;
+        }
+        else
+        {
+          flywheelOnTarget = false;
+        }
+      }
+      else
+      {
+        flywheelOnTarget = false;
+        onTargetCount = 0;
+      }
+      std::cout << currentVelocity << "\t" << error << "\t" << integral
+                << "\t" << currentFlywheelVoltage << "\n";
+      //std::cout << integral << "\n";
+      // std::cout << "vel: " << currentVelocity << "   e: " << error << "   tE: " << totalError
+      //           << "   p: " << proportional << "   i: " << integral << "    volt: "
+      //           << currentFlywheelVoltage << "    targ: " << flywheelOnTarget << "   co: " << onTargetCount
+      //           << "    drop: " << flywheelShotDetected << "   targSp: " << targetFlywheelSpeed << "\n\n";
+
+      /*lastVelocity3 = lastVelocity2;
+      lastVelocity2 = lastVelocity1;*/
+      lastVelocity1 = currentVelocity;
+      lastError = error;
+    }
+
+    else if (runFlywheelAtVoltageRequested == true)
+    {
+      flywheel.move_voltage(targetFlywheelVoltage);
+    }
+    else
+    {
+      flywheel.move_voltage(0);
+      flywheelOnTarget = false;
+    }
+    pros::delay(50);
+  }
+}
+
+/***************************************Flywhel Status Control Task*******************************/
+pros::Task flywheelRPMMonitorAuto(maintainFlywheelSpeedAuto, parameter3, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Flywheel speed task");

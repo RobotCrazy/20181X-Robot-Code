@@ -77,6 +77,59 @@ float getRotationalVelocity()
   return velocity;
 }
 
+void applyBrakeForDrive(int power, int speedTolerance)
+{
+  if (power > 0)
+  {
+
+    while (frontRight.get_actual_velocity() < speedTolerance &&
+           backRight.get_actual_velocity() < speedTolerance &&
+           frontLeft.get_actual_velocity() < speedTolerance &&
+           backLeft.get_actual_velocity() < speedTolerance)
+    {
+      setRightDrive(power);
+      setLeftDrive(power);
+    }
+  }
+
+  else
+  {
+    while (frontRight.get_actual_velocity() > speedTolerance &&
+           backRight.get_actual_velocity() > speedTolerance &&
+           frontLeft.get_actual_velocity() > speedTolerance &&
+           backLeft.get_actual_velocity() > speedTolerance)
+    {
+      setRightDrive(power);
+      setLeftDrive(power);
+    }
+  }
+
+  setRightDrive(0);
+  setLeftDrive(0);
+}
+
+void applyBrakeForTurn(int leftPower, int rightPower, int speedTolerance)
+{
+  if (leftPower > 0)
+  {
+    while (getRotationalVelocity() > speedTolerance)
+    {
+      setRightDrive(leftPower);
+      setLeftDrive(rightPower);
+    }
+  }
+  else
+  {
+    while (getRotationalVelocity() < speedTolerance)
+    {
+      setRightDrive(leftPower);
+      setLeftDrive(rightPower);
+    }
+  }
+  setRightDrive(0);
+  setLeftDrive(0);
+}
+
 /**********************************Chassis Autonomous Movement Functions**************************/
 void drive(char dir, float inches, int driveSpeed)
 {
@@ -178,12 +231,13 @@ void drive(char dir, float inches)
     ticks *= -1;
   }
 
-  while (abs(error) > positionTolerance ||
+  while (abs(error) > positionTolerance /* ||
          abs(frontRight.get_actual_velocity()) > speedTolerance ||
          abs(backRight.get_actual_velocity()) > speedTolerance ||
          abs(frontLeft.get_actual_velocity()) > speedTolerance ||
          abs(backLeft.get_actual_velocity()) > speedTolerance ||
-         getRotationalVelocity() > rotationalSpeedTolerance)
+         getRotationalVelocity() > rotationalSpeedTolerance*/
+  )
   {
     angleError = (startingAngle - gyro.get_value());
 
@@ -236,6 +290,7 @@ void driveRampUp(char dir, float inches)
   int angleError = 0;
   int lastAngleError = 0;
   float velocityError = 0;
+  int brakePower = 5000;
 
   //Constants here//
   float kp = 28;
@@ -243,7 +298,7 @@ void driveRampUp(char dir, float inches)
   float increaseFactor = 18;
 
   //Tolerance Variables Here//
-  int speedTolerance = 4;
+  int speedTolerance = 6;
   int positionTolerance = 10;
 
   //Deadbands//
@@ -253,12 +308,17 @@ void driveRampUp(char dir, float inches)
   {
     ticks *= -1;
   }
+  else
+  {
+    brakePower *= -1;
+  }
 
-  while (abs(error) > positionTolerance ||
+  while (abs(error) > positionTolerance /* ||
          abs(frontRight.get_actual_velocity()) > speedTolerance ||
          abs(backRight.get_actual_velocity()) > speedTolerance ||
          abs(frontLeft.get_actual_velocity()) > speedTolerance ||
-         abs(backLeft.get_actual_velocity()) > speedTolerance)
+         abs(backLeft.get_actual_velocity()) > speedTolerance*/
+  )
   {
     angleError = startingAngle - gyro.get_value();
     if (angleError > 4)
@@ -305,6 +365,7 @@ void driveRampUp(char dir, float inches)
     lastError = error;
     pros::delay(1);
   }
+  applyBrakeForDrive(brakePower, speedTolerance);
   setRightDrive(0);
   setLeftDrive(0);
 }
@@ -316,7 +377,7 @@ void driveRampUp(char dir, float inches)
  * distance1 - Distance from starting point to first shot
  * distance2 - Distance from starting point to second shot
  **/
-/*void driveShootAsync(char dir, float inches, int distance1, int distance2)
+void driveShootAsync(char dir, float inches, int shootDistance)
 {
   frontRight.tare_position();
   backRight.tare_position();
@@ -324,6 +385,7 @@ void driveRampUp(char dir, float inches)
   backLeft.tare_position();
 
   int ticks = (int)((inches / (PI * WHEEL_RADIUS)) * 180);
+  int shootDistTicks = (int)((shootDistance / (PI * WHEEL_RADIUS)) * 180);
   int angleCorrectionFactor = 40;
   float angleCorrectionFactorD = 2;
   int startingAngle = globalTargetAngle;
@@ -335,12 +397,17 @@ void driveRampUp(char dir, float inches)
                         frontLeft.get_position() +
                         backLeft.get_position()) /
                        4);
-  int driveSpeed = 8000;
+  int lastError = 0;
+  float driveSpeed = 0;
+  float lastDriveSpeed = 0;
   int angleError = 0;
   int lastAngleError = 0;
   float velocityError = 0;
+  int brakePower = 5000;
 
   //Constants here//
+  float kp = 28;
+  float kd = 3;
   float increaseFactor = 18;
 
   //Tolerance Variables Here//
@@ -354,17 +421,28 @@ void driveRampUp(char dir, float inches)
   {
     ticks *= -1;
   }
+  else
+  {
+    brakePower *= -1;
+  }
 
-  while (abs(error) > positionTolerance ||
-         abs(frontRight.get_actual_velocity()) > speedTolerance ||
-         abs(backRight.get_actual_velocity()) > speedTolerance ||
-         abs(frontLeft.get_actual_velocity()) > speedTolerance ||
-         abs(backLeft.get_actual_velocity()) > speedTolerance)
+  while (abs(error) > positionTolerance)
   {
     angleError = startingAngle - gyro.get_value();
     traveledDistance = ((frontRight.get_position() + backRight.get_position() + frontLeft.get_position() + backLeft.get_position()) / 4);
 
     error = ticks - traveledDistance;
+
+    driveSpeed = error * kp + ((error - lastError) * kd);
+
+    if (isBetween(driveSpeed, -1 * speedDeadband, 0))
+    {
+      driveSpeed = -1 * speedDeadband;
+    }
+    if (isBetween(driveSpeed, 0, speedDeadband))
+    {
+      driveSpeed = speedDeadband;
+    }
 
     if (driveSpeed > 0 && lastDriveSpeed >= 0 && driveSpeed > lastDriveSpeed)
     {
@@ -385,14 +463,16 @@ void driveRampUp(char dir, float inches)
       lastDriveSpeed = driveSpeed;
     }
 
-    if (isBetween(traveledDistance, distance1 - 100, distance2 + 100) || isBetween(traveledDistance, distance2 - 100, distance2 + 100))
+    if (isBetween(traveledDistance, shootDistTicks - 200, shootDistTicks + 150))
     {
       intakeMonitor.suspend();
-      indexer.move_voltage(12000);
+      indexer.move_velocity(200);
+      intake.move_velocity(200);
     }
     else
     {
-      indexer.move_voltage(0);
+      indexer.move_velocity(0);
+      intake.move_velocity(0);
       intakeMonitor.resume();
     }
 
@@ -400,29 +480,46 @@ void driveRampUp(char dir, float inches)
     lastError = error;
     pros::delay(1);
   }
+
+  applyBrakeForDrive(brakePower, speedTolerance);
   setRightDrive(0);
   setLeftDrive(0);
-}*/
+}
 
 void turnToTarget(float targetAngle, int maxSpeed)
 {
-  float kp = 20;
+  float kp = 13;
   float scaledAngle = targetAngle * GYRO_SCALE;
   globalTargetAngle = scaledAngle * 10;
   int error = (scaledAngle * 10.0) - gyro.get_value();
   int driveSpeed = error * kp;
-  int tolerance = 10;
+  int tolerance = 5;
   int speedTolerance = 5;
   int rotationalSpeedTolerance = 2;
 
   int speedDeadband = 1700;
 
-  while (abs(error) > tolerance ||
+  int leftBrakePower = 0;
+  int rightBrakePower = 0;
+
+  if (driveSpeed > 0)
+  { //if positive
+    leftBrakePower = -5000;
+    rightBrakePower = 5000;
+  }
+  else
+  {
+    leftBrakePower = 5000;
+    rightBrakePower = -5000;
+  }
+
+  while (abs(error) > tolerance /* ||
          abs(frontRight.get_actual_velocity()) > speedTolerance ||
          abs(backRight.get_actual_velocity()) > speedTolerance ||
          abs(frontLeft.get_actual_velocity()) > speedTolerance ||
          abs(backLeft.get_actual_velocity()) > speedTolerance ||
-         abs(getRotationalVelocity()) > rotationalSpeedTolerance)
+         abs(getRotationalVelocity()) > rotationalSpeedTolerance*/
+  )
   {
 
     error = (scaledAngle * 10) - gyro.get_value();
@@ -441,6 +538,7 @@ void turnToTarget(float targetAngle, int maxSpeed)
     setLeftDrive(driveSpeed);
     pros::delay(5);
   }
+  applyBrakeForTurn(leftBrakePower, rightBrakePower, rotationalSpeedTolerance);
   setRightDrive(0);
   setLeftDrive(0);
 }
@@ -557,34 +655,15 @@ void holdDrivePos(int targetPosL, int targetPosR)
   }
 }
 
-/*void slewRightDrive(int rightSpeed)
+void setRightDriveOP(int voltage)
 {
-  if (rightSpeed > prevRightSpeed)
-  {
-    prevRightSpeed += driveSlewFactor;
-    frontRight.move(prevRightSpeed);
-    backRight.move(prevRightSpeed);
-  }
-  else if (rightSpeed < prevRightSpeed)
-  {
-    prevRightSpeed -= driveSlewFactor;
-    frontRight.move(prevRightSpeed);
-    backRight.move(prevRightSpeed);
-  }
+  frontRight.move_voltage(voltage);
+  backRight.move_voltage(voltage);
 }
 
-void slewLeftDrive(int leftSpeed)
+void setLeftDriveOP(int voltage)
 {
-  if (leftSpeed > prevLeftSpeed)
-  {
-    prevLeftSpeed += driveSlewFactor;
-    frontLeft.move(prevLeftSpeed);
-    backLeft.move(prevLeftSpeed);
-  }
-  else if (leftSpeed < prevLeftSpeed)
-  {
-    prevLeftSpeed -= driveSlewFactor;
-    frontLeft.move(prevLeftSpeed);
-    backLeft.move(prevLeftSpeed);
-  }
-}*/
+
+  frontLeft.move_voltage(voltage);
+  backLeft.move_voltage(voltage);
+}

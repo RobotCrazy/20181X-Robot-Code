@@ -29,16 +29,70 @@ void setTargetDriveBasePos()
 	driveBaseTargetSet = true;
 }
 
+const int rapidFireMacroTotalDistance = (int)((31.0 / (PI * WHEEL_RADIUS)) * 180);
+const int rapidFireMacroShootDistance = (int)((12.0 / (PI * WHEEL_RADIUS)) * 180);
+int macroAngleCorrectionFactor = 40;
+int macroAngleCorrectionFactorD = 2;
+int macroAngleError = 0;
+int macroPrevAngleError = 0;
+int macroStartingAngle = gyro.get_value();
+int macroTraveledDistance = 0;
+int macroLastDriveSpeed = 0;
+float macroIncreaseFactor = 18;
+void completeRapidFireMacro()
+{
+	if (macroTraveledDistance < rapidFireMacroTotalDistance)
+	{
+		macroAngleError = macroStartingAngle - gyro.get_value();
+		macroTraveledDistance = ((frontRight.get_position() + backRight.get_position() + frontLeft.get_position() + backLeft.get_position()) / 4);
+
+		int driveSpeed = 10000;
+
+		if (driveSpeed > 0 && macroLastDriveSpeed >= 0 && driveSpeed > macroLastDriveSpeed)
+		{
+			setLeftDriveOP(macroLastDriveSpeed + macroIncreaseFactor + ((macroAngleError * macroAngleCorrectionFactor) + ((macroAngleError - macroPrevAngleError) * macroAngleCorrectionFactorD)));
+			setRightDriveOP(macroLastDriveSpeed + macroIncreaseFactor - ((macroAngleError * macroAngleCorrectionFactor) + ((macroAngleError - macroPrevAngleError) * macroAngleCorrectionFactorD)));
+			macroLastDriveSpeed += macroIncreaseFactor;
+		}
+		else if (driveSpeed < 0 && macroLastDriveSpeed <= 0 && driveSpeed < macroLastDriveSpeed)
+		{
+			setLeftDriveOP(macroLastDriveSpeed - macroIncreaseFactor + ((macroAngleError * macroAngleCorrectionFactor) + ((macroAngleError - macroPrevAngleError) * macroAngleCorrectionFactorD)));
+			setRightDriveOP(macroLastDriveSpeed - macroIncreaseFactor - ((macroAngleError * macroAngleCorrectionFactor) + ((macroAngleError - macroPrevAngleError) * macroAngleCorrectionFactorD)));
+			macroLastDriveSpeed -= macroIncreaseFactor;
+		}
+		else
+		{
+			setLeftDriveOP(driveSpeed + ((macroAngleError * macroAngleCorrectionFactor) + ((macroAngleError - macroPrevAngleError) * macroAngleCorrectionFactorD)));
+			setRightDriveOP(driveSpeed - ((macroAngleError * macroAngleCorrectionFactor) + ((macroAngleError - macroPrevAngleError) * macroAngleCorrectionFactorD)));
+			macroAngleError = driveSpeed;
+		}
+
+		if (isBetween(macroTraveledDistance, rapidFireMacroShootDistance - 200, rapidFireMacroShootDistance + 150))
+		{
+			indexer.move_velocity(200);
+			intake.move_velocity(200);
+		}
+		else
+		{
+			indexer.move_velocity(0);
+			intake.move_velocity(0);
+		}
+
+		macroPrevAngleError = macroAngleError;
+	}
+}
+
 void opcontrol()
 {
 	/*intakeUpRequested = false;
 	prepareShotRequested = false;
 	maintainFlywheelSpeedRequested = false;*/
-	//flywheelRPMMonitor.suspend();
+	flywheelRPMMonitorAuto.suspend();
 	intakeMonitor.suspend();
 	pros::Controller master(CONTROLLER_MASTER);
 	//pros::Task flywheelRPMMonitor(maintainFlywheelSpeed, parameter, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Flywheel speed task");
 
+	pros::Task flywheelRPMMonitorOP(maintainFlywheelSpeedOP, parameter3, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Flywheel speed task");
 	int leftDrive = 0;
 	int rightDrive = 0;
 	bool firePrinted = false;
@@ -47,11 +101,32 @@ void opcontrol()
 
 	int doubleShotStartTime = 0;
 	bool doubleShotInitiated = false;
-	const int doubleShotDelayTime = 100;
+
+	bool rapidFireMacroInitiated = false;
+
+	const int doubleShotDelayTime = 200;
 
 	while (true)
 	{
 		//std::cout << "Sonar: " << intakeSonar.get_value() << "\n";
+
+		if (master.get_digital(DIGITAL_RIGHT))
+		{
+			if (rapidFireMacroInitiated == false)
+			{
+				rapidFireMacroInitiated = true;
+				frontRight.tare_position();
+				backRight.tare_position();
+				frontLeft.tare_position();
+				backLeft.tare_position();
+			}
+			completeRapidFireMacro();
+		}
+		else
+		{
+			rapidFireMacroInitiated = false;
+		}
+
 		leftDrive = master.get_analog(ANALOG_LEFT_Y);
 		rightDrive = master.get_analog(ANALOG_RIGHT_Y);
 		frontLeft.move(leftDrive);
