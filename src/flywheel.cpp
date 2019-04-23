@@ -109,6 +109,11 @@ float estimateFlywheelVoltage(float targetVelocity)
   //}
 }
 
+float estimateFlywheelVoltageAuto(float targetVelocity)
+{
+  return (targetVelocity * 4);
+}
+
 double getScaledFlywheelVelocity()
 {
   return (flywheel.get_actual_velocity() * flywheelGearingFactor);
@@ -362,8 +367,8 @@ void maintainFlywheelSpeedAuto(void *param)
 
   //Constants//
   double kp = .4;
-  double ki = .008;
-  double kd = .07;
+  double ki = .005;
+  double kd = .085;
 
   //PID Variables Here//
   double currentVelocity = 0; /*emaFilter(getScaledFlywheelVelocity(), lastVelocity1, 0.2)*/
@@ -387,16 +392,16 @@ void maintainFlywheelSpeedAuto(void *param)
   {
     if (maintainFlywheelSpeedRequested == true)
     {
+      totalError += (error / 2);
       currentVelocity = emaFilter(getScaledFlywheelVelocity(), lastVelocity1, 0.2); //velocity of final velocity scaled with physical gearing
       //lv_chart_set_next(homeChart, seriesA, currentVelocity);
       error = targetFlywheelSpeed - currentVelocity;
       proportional = error * kp;
       derivative = (error - lastError) * kd;
-      estimate = estimateFlywheelVoltage(targetFlywheelSpeed);
+      estimate = estimateFlywheelVoltageAuto(targetFlywheelSpeed);
 
       if (abs(error) > integralActiveZone) //Out of its active zone
       {
-        totalError = 0;
         if (currentVelocity < targetFlywheelSpeed)
         {
           currentFlywheelVoltage = estimateFlywheelVoltage(targetFlywheelSpeed) + 4000;
@@ -412,7 +417,6 @@ void maintainFlywheelSpeedAuto(void *param)
         integral = totalError * ki;
         currentFlywheelVoltage = (estimate + proportional + integral + derivative);
       }
-
       //currentFlywheelVoltage += proportional; // + integral;
 
       flywheel.move_voltage(currentFlywheelVoltage);
@@ -440,7 +444,7 @@ void maintainFlywheelSpeedAuto(void *param)
         onTargetCount = 0;
       }
       std::cout << currentVelocity << "\t" << error << "\t" << integral
-                << "\t" << currentFlywheelVoltage << "\n";
+                << "\t" << currentFlywheelVoltage << "\t" << targetFlywheelSpeed << "\n";
       //std::cout << integral << "\n";
       // std::cout << "vel: " << currentVelocity << "   e: " << error << "   tE: " << totalError
       //           << "   p: " << proportional << "   i: " << integral << "    volt: "

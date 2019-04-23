@@ -512,6 +512,10 @@ void turnToTarget(float targetAngle, int maxSpeed)
     leftBrakePower = 5000;
     rightBrakePower = -5000;
   }
+  if (abs(error) < 46)
+  {
+    kp = 17;
+  }
 
   while (abs(error) > tolerance /* ||
          abs(frontRight.get_actual_velocity()) > speedTolerance ||
@@ -657,13 +661,13 @@ void holdDrivePos(int targetPosL, int targetPosR)
 
 void setRightDriveOP(int voltage)
 {
-  frontRight.move_voltage(voltage);
-  backRight.move_voltage(voltage);
+  frontRight.move(voltage);
+  backRight.move(voltage);
 }
 
 void setLeftDriveOP(int voltage)
 {
 
-  frontLeft.move_voltage(voltage);
-  backLeft.move_voltage(voltage);
+  frontLeft.move(voltage);
+  backLeft.move(voltage);
 }

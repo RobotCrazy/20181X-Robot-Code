@@ -30,7 +30,7 @@ void setTargetDriveBasePos()
 }
 
 const int rapidFireMacroTotalDistance = (int)((31.0 / (PI * WHEEL_RADIUS)) * 180);
-const int rapidFireMacroShootDistance = (int)((12.0 / (PI * WHEEL_RADIUS)) * 180);
+const int rapidFireMacroShootDistance = (int)((13.5 / (PI * WHEEL_RADIUS)) * 180);
 int macroAngleCorrectionFactor = 40;
 int macroAngleCorrectionFactorD = 2;
 int macroAngleError = 0;
@@ -38,15 +38,16 @@ int macroPrevAngleError = 0;
 int macroStartingAngle = gyro.get_value();
 int macroTraveledDistance = 0;
 int macroLastDriveSpeed = 0;
-float macroIncreaseFactor = 18;
+float macroIncreaseFactor = 2;
 void completeRapidFireMacro()
 {
 	if (macroTraveledDistance < rapidFireMacroTotalDistance)
 	{
+		startFlywheel(2475);
 		macroAngleError = macroStartingAngle - gyro.get_value();
 		macroTraveledDistance = ((frontRight.get_position() + backRight.get_position() + frontLeft.get_position() + backLeft.get_position()) / 4);
 
-		int driveSpeed = 10000;
+		int driveSpeed = 127;
 
 		if (driveSpeed > 0 && macroLastDriveSpeed >= 0 && driveSpeed > macroLastDriveSpeed)
 		{
@@ -67,6 +68,9 @@ void completeRapidFireMacro()
 			macroAngleError = driveSpeed;
 		}
 
+		setLeftDriveOP(driveSpeed);
+		setRightDriveOP(driveSpeed);
+
 		if (isBetween(macroTraveledDistance, rapidFireMacroShootDistance - 200, rapidFireMacroShootDistance + 150))
 		{
 			indexer.move_velocity(200);
@@ -80,6 +84,11 @@ void completeRapidFireMacro()
 
 		macroPrevAngleError = macroAngleError;
 	}
+	else
+	{
+		setRightDriveOP(0);
+		setLeftDriveOP(0);
+	}
 }
 
 void opcontrol()
@@ -89,6 +98,7 @@ void opcontrol()
 	maintainFlywheelSpeedRequested = false;*/
 	flywheelRPMMonitorAuto.suspend();
 	intakeMonitor.suspend();
+	capScraperAutonHold.suspend();
 	pros::Controller master(CONTROLLER_MASTER);
 	//pros::Task flywheelRPMMonitor(maintainFlywheelSpeed, parameter, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Flywheel speed task");
 
@@ -96,7 +106,7 @@ void opcontrol()
 	int leftDrive = 0;
 	int rightDrive = 0;
 	bool firePrinted = false;
-	int capScraperTargetPos = 0;
+	int capScraperTarget = 0;
 	float flywheelSpeed = 0;
 
 	int doubleShotStartTime = 0;
@@ -104,7 +114,12 @@ void opcontrol()
 
 	bool rapidFireMacroInitiated = false;
 
-	const int doubleShotDelayTime = 200;
+	const int doubleShotDelayTime = 400;
+
+	frontRight.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_COAST);
+	backRight.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_COAST);
+	frontLeft.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_COAST);
+	backLeft.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_COAST);
 
 	while (true)
 	{
@@ -119,20 +134,26 @@ void opcontrol()
 				backRight.tare_position();
 				frontLeft.tare_position();
 				backLeft.tare_position();
+				indexer.move_relative(800, 200);
+				pros::delay(200);
 			}
 			completeRapidFireMacro();
 		}
 		else
 		{
 			rapidFireMacroInitiated = false;
+			macroAngleError = 0;
+			macroPrevAngleError = 0;
+			macroStartingAngle = gyro.get_value();
+			macroTraveledDistance = 0;
+			macroLastDriveSpeed = 0;
+			leftDrive = master.get_analog(ANALOG_LEFT_Y);
+			rightDrive = master.get_analog(ANALOG_RIGHT_Y);
+			frontLeft.move(leftDrive);
+			backLeft.move(leftDrive);
+			frontRight.move(rightDrive);
+			backRight.move(rightDrive);
 		}
-
-		leftDrive = master.get_analog(ANALOG_LEFT_Y);
-		rightDrive = master.get_analog(ANALOG_RIGHT_Y);
-		frontLeft.move(leftDrive);
-		backLeft.move(leftDrive);
-		frontRight.move(rightDrive);
-		backRight.move(rightDrive);
 
 		if (master.get_digital(DIGITAL_R2) && master.get_digital(DIGITAL_R1))
 		{
@@ -170,7 +191,11 @@ void opcontrol()
 		{
 			indexer.move_velocity(-200);
 		}
-		else
+		else if (master.get_digital(DIGITAL_LEFT))
+		{
+			intake.move_velocity(-200);
+		}
+		else if (rapidFireMacroInitiated == false)
 		{
 			intake.move_velocity(0);
 			indexer.move_velocity(0);
@@ -190,12 +215,13 @@ void opcontrol()
 		{
 			driveBaseTargetSet = false;
 		}
-
-		if ((master.get_digital(DIGITAL_R1) == true) && (doubleShotInitiated == false))
+		if (rapidFireMacroInitiated == false)
 		{
-			startFlywheel(2475);
+			if ((master.get_digital(DIGITAL_R1) == true) && (doubleShotInitiated == false))
+			{
+				startFlywheel(2475);
 
-			/*if (flywheelShotDetected == true)
+				/*if (flywheelShotDetected == true)
 			{
 				targetFlywheelSpeed = 1750;
 				if (firstShotDetection == false)
@@ -205,18 +231,19 @@ void opcontrol()
 					pros::delay(1000);
 				}
 		}*/
-			//flywheel.move_voltage(12000);
-			//std::cout << flywheel.get_actual_velocity() << "\n";
-		}
-		else
-		{
-			flywheel.move_voltage(0);
-			flywheel.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_COAST);
-			flywheelOnTarget = false;
-			flywheelShotDetected = false;
-			targetFlywheelSpeed = 0;
-			maintainFlywheelSpeedRequested = false;
-			stopFlywheel();
+				//flywheel.move_voltage(12000);
+				//std::cout << flywheel.get_actual_velocity() << "\n";
+			}
+			else
+			{
+				flywheel.move_voltage(0);
+				flywheel.set_brake_mode(pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_COAST);
+				flywheelOnTarget = false;
+				flywheelShotDetected = false;
+				targetFlywheelSpeed = 0;
+				maintainFlywheelSpeedRequested = false;
+				stopFlywheel();
+			}
 		}
 
 		if (flywheel.get_actual_velocity() <= 164 && firePrinted == false)
@@ -233,19 +260,19 @@ void opcontrol()
 		if (master.get_digital(DIGITAL_UP))
 		{
 			capScraper.move(127);
-			capScraperTargetPos = capScraper.get_position();
+			capScraperTarget = capScraper.get_position();
 			holdCapScraperRequested = false;
 		}
 		else if (master.get_digital(DIGITAL_DOWN))
 		{
 			capScraper.move(-90);
-			capScraperTargetPos = capScraper.get_position();
+			capScraperTarget = capScraper.get_position();
 			holdCapScraperRequested = false;
 		}
 		else
 		{
 			holdCapScraperRequested = true;
-			holdCapScraperPos(capScraperTargetPos);
+			holdCapScraperPos(capScraperTarget);
 		}
 
 		//std::cout << "onTarget" << flywheelOnTarget << "\n";
