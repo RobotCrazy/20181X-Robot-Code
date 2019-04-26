@@ -549,7 +549,7 @@ void turnToTarget(float targetAngle, int maxSpeed)
 
 void turnToTargetQuickly(float targetAngle, int maxSpeed)
 {
-  float kp = 16;
+  float kp = 19;
   float scaledAngle = targetAngle * GYRO_SCALE;
   globalTargetAngle = scaledAngle * 10;
   int error = (scaledAngle * 10.0) - gyro.get_value();

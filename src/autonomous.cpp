@@ -277,18 +277,19 @@ void auto1() //Blue Front (Slot 1)
   driveShootAsync('f', 30, 12);
   startFlywheel(2400);
   driveRampUp('b', 28);
-  turnToTarget(45, 100);
+  turnToTargetQuickly(45, 100);
   driveRampUp('f', 12.25);
   startIntake();
   moveCapScorer(-240);
   driveRampUp('b', 12.5);
   setCapScraperTargetPos(-285);
   driveRampUp('f', 11);
+  setCapScraperTargetPos(-100);
   shootWhenReady(2300, 700, false);
   startFlywheel(1700);
   pros::delay(1000);
   shootWhenReady(1600, 1500, true, true);
-  moveCapScorer(-100);
+  // moveCapScorer(-100);
 }
 
 void auto2() //Blue Back (Slot 2)
@@ -333,18 +334,18 @@ void auto3() //Red Front (Slot 3)
   driveShootAsync('f', 31.8, 12);
   startFlywheel(2400);
   driveRampUp('b', 28);
-  turnToTargetQuickly(-42.75, 100);
+  turnToTargetQuickly(-46, 100);
   driveRampUp('f', 11.5);
   startIntake();
   moveCapScorer(-240);
   driveRampUp('b', 12.5);
   setCapScraperTargetPos(-285);
   driveRampUp('f', 11);
+  setCapScraperTargetPos(-100);
   shootWhenReady(2300, 700, false);
   startFlywheel(1700);
   pros::delay(1000);
   shootWhenReady(1600, 1500, true, true);
-  moveCapScorer(-100);
 }
 
 void auto4() //Red Back Middle Pole (Slot 4)
