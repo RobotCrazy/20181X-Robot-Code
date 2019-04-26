@@ -547,6 +547,67 @@ void turnToTarget(float targetAngle, int maxSpeed)
   setLeftDrive(0);
 }
 
+void turnToTargetQuickly(float targetAngle, int maxSpeed)
+{
+  float kp = 16;
+  float scaledAngle = targetAngle * GYRO_SCALE;
+  globalTargetAngle = scaledAngle * 10;
+  int error = (scaledAngle * 10.0) - gyro.get_value();
+  int driveSpeed = error * kp;
+  int tolerance = 5;
+  int speedTolerance = 5;
+  int rotationalSpeedTolerance = 2;
+
+  int speedDeadband = 1700;
+
+  int leftBrakePower = 0;
+  int rightBrakePower = 0;
+
+  if (driveSpeed > 0)
+  { //if positive
+    leftBrakePower = -5000;
+    rightBrakePower = 5000;
+  }
+  else
+  {
+    leftBrakePower = 5000;
+    rightBrakePower = -5000;
+  }
+  if (abs(error) < 46)
+  {
+    kp = 17;
+  }
+
+  while (abs(error) > tolerance /* ||
+         abs(frontRight.get_actual_velocity()) > speedTolerance ||
+         abs(backRight.get_actual_velocity()) > speedTolerance ||
+         abs(frontLeft.get_actual_velocity()) > speedTolerance ||
+         abs(backLeft.get_actual_velocity()) > speedTolerance ||
+         abs(getRotationalVelocity()) > rotationalSpeedTolerance*/
+  )
+  {
+
+    error = (scaledAngle * 10) - gyro.get_value();
+    driveSpeed = error * kp;
+
+    if (isBetween(driveSpeed, -1 * speedDeadband, 0))
+    {
+      driveSpeed = -1 * speedDeadband;
+    }
+    if (isBetween(driveSpeed, 0, speedDeadband))
+    {
+      driveSpeed = speedDeadband;
+    }
+
+    setRightDrive(driveSpeed * -1);
+    setLeftDrive(driveSpeed);
+    pros::delay(5);
+  }
+  applyBrakeForTurn(leftBrakePower, rightBrakePower, rotationalSpeedTolerance);
+  setRightDrive(0);
+  setLeftDrive(0);
+}
+
 /**
  * This function turns a certain number of degrees using the encoders on the drive base
  * dir - The direction to turn as a character

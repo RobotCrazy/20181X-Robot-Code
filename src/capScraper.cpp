@@ -15,18 +15,19 @@ void setCapScraperTargetPos(int targetPos)
 }
 void holdCapScraperPos(int targetPos)
 {
+  int holdingPower = 10;
   int error = targetPos - capScraper.get_position();
-  int tolerance = 30;
+  int tolerance = 4;
   float kp = 1;
   if (holdCapScraperRequested == true)
   {
     if (abs(error) > tolerance)
     {
-      capScraper.move_velocity(error * kp);
+      capScraper.move(error * kp);
     }
     else
     {
-      capScraper.move_velocity(0);
+      capScraper.move(holdingPower);
     }
   }
 }
@@ -52,20 +53,21 @@ void moveCapScorer(int targetPos)
 char *param4;
 void holdCapScraperPosInAuton(void *parameter)
 {
+  int holdingPower = 10;
   int error = capScraperTargetPos - capScraper.get_position();
-  int kp = 2;
+  int kp = 1;
   while (true)
   {
     error = capScraperTargetPos - capScraper.get_position();
-    if (abs(error) > 10)
+    if (abs(error) > 3)
     {
-      capScraper.move_velocity(error * kp);
+      capScraper.move(error * kp);
     }
     else
     {
-      capScraper.move_velocity(0);
+      capScraper.move(holdingPower);
     }
-
+    std::cout << capScraper.get_position() << "\n";
     pros::delay(20);
   }
 }

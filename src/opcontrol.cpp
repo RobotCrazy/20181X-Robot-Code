@@ -278,6 +278,8 @@ void opcontrol()
 		//std::cout << "onTarget" << flywheelOnTarget << "\n";
 		//std::cout << flywheelShotDetected << "\n";
 		//std::cout << intakeSonar.get_value() << "\n";
+		std::cout << capScraper.get_position() << "\n";
+
 		pros::delay(10);
 	}
 }

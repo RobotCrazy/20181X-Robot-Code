@@ -443,8 +443,8 @@ void maintainFlywheelSpeedAuto(void *param)
         flywheelOnTarget = false;
         onTargetCount = 0;
       }
-      std::cout << currentVelocity << "\t" << error << "\t" << integral
-                << "\t" << currentFlywheelVoltage << "\t" << targetFlywheelSpeed << "\n";
+      // std::cout << currentVelocity << "\t" << error << "\t" << integral
+      //           << "\t" << currentFlywheelVoltage << "\t" << targetFlywheelSpeed << "\n";
       //std::cout << integral << "\n";
       // std::cout << "vel: " << currentVelocity << "   e: " << error << "   tE: " << totalError
       //           << "   p: " << proportional << "   i: " << integral << "    volt: "

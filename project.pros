@@ -1,7 +1,7 @@
 {
     "py/object": "pros.conductor.project.Project",
     "py/state": {
-        "project_name": "Cross Red",
+        "project_name": "Red Front",
         "target": "v5",
         "templates": {
             "kernel": {
@@ -249,8 +249,8 @@
             }
         },
         "upload_options": {
-            "description": "Cross Court Shoot On Red",
-            "slot": 5
+            "description": "Red Front",
+            "slot": 3
         }
     }
 }

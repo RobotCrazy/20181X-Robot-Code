@@ -40,6 +40,7 @@ extern void driveRampUp(char dir, float inches);
 extern void driveRampUp(char dir, float inches, int speedTol, int posTol);
 extern void driveShootAsync(char dir, float inches, int shootDistance);
 extern void turnToTarget(float targetAngle, int maxSpeed);
+extern void turnToTargetQuickly(float targetAngle, int maxSpeed);
 //extern void climbPlatform(float maxInches);
 
 /****************************Chassis General Functions**********************************/

@@ -265,20 +265,20 @@ void auto1() //Blue Front (Slot 1)
 {
   capScraper.tare_position();
   setCapScraperTargetPos(capScraper.get_position());
-  startFlywheel(2750);
-  driveRampUp('f', 25.5);
+  startFlywheel(2850);
+  driveRampUp('f', 24);
   startIntake();
-  pros::delay(400);
-  driveRampUp('b', 27.5);
-  turnToTarget(87.5, 100);
+  pros::delay(500);
+  driveRampUp('b', 23.4);
+  turnToTarget(87.25, 100);
   stopIntake();
   setCapScraperTargetPos(-100);
-  shootWhenReady(2700, 700, false);
-  driveShootAsync('f', 31, 12);
+  shootWhenReady(2800, 700, false);
+  driveShootAsync('f', 30, 12);
   startFlywheel(2400);
   driveRampUp('b', 28);
-  turnToTarget(44.5, 100);
-  driveRampUp('f', 11.5);
+  turnToTarget(45, 100);
+  driveRampUp('f', 12.25);
   startIntake();
   moveCapScorer(-240);
   driveRampUp('b', 12.5);
@@ -301,39 +301,39 @@ void auto2() //Blue Back (Slot 2)
   pros::delay(500);
   driveRampUp('b', 14.25);
   setCapScraperTargetPos(-280);
-  turnToTarget(-45, 100);
+  turnToTargetQuickly(-45, 100);
   stopIntake();
   driveRampUp('f', 17);
   moveCapScorer(-100);
-  driveRampUp('b', 37);
-  turnToTarget(51, 100);
+  driveRampUp('b', 38.8);
+  turnToTarget(50, 100);
   shootWhenReady(2450, 800, false);
-  startFlywheel(1950);
+  startFlywheel(1980);
   pros::delay(1000);
   shootWhenReady(1900, 1000, true, true);
   startIntake();
   turnToTarget(0, 100);
   driveRampUp('f', 10);
-  driveRampUp('f', 30);
+  driveRampUp('f', 40);
 }
 
 void auto3() //Red Front (Slot 3)
 {
   capScraper.tare_position();
   setCapScraperTargetPos(capScraper.get_position());
-  startFlywheel(2750);
+  startFlywheel(2850);
   driveRampUp('f', 25.5);
   startIntake();
   pros::delay(400);
-  driveRampUp('b', 25.5);
+  driveRampUp('b', 26.6);
   turnToTarget(-87.5, 100);
   stopIntake();
-  setCapScraperTargetPos(-100);
-  shootWhenReady(2700, 700, false);
-  driveShootAsync('f', 31, 12);
+  setCapScraperTargetPos(-120);
+  shootWhenReady(2800, 700, false);
+  driveShootAsync('f', 31.8, 12);
   startFlywheel(2400);
   driveRampUp('b', 28);
-  turnToTarget(-39.8, 100);
+  turnToTargetQuickly(-42.75, 100);
   driveRampUp('f', 11.5);
   startIntake();
   moveCapScorer(-240);
@@ -351,26 +351,26 @@ void auto4() //Red Back Middle Pole (Slot 4)
 {
   capScraper.tare_position();
   setCapScraperTargetPos(capScraper.get_position());
-  startFlywheel(2400);
+  startFlywheel(2320);
   driveRampUp('f', 25);
   startIntake();
   pros::delay(500);
   driveRampUp('b', 12);
   setCapScraperTargetPos(-280);
-  turnToTarget(45, 100);
+  turnToTargetQuickly(45, 100);
   stopIntake();
   driveRampUp('f', 17);
   moveCapScorer(-100);
   driveRampUp('b', 40.5);
   turnToTarget(-50.5, 100);
-  shootWhenReady(2450, 800, false);
-  startFlywheel(1950);
+  shootWhenReady(2280, 800, false);
+  startFlywheel(1980);
   pros::delay(1000);
   shootWhenReady(1900, 1000, true, true);
   startIntake();
-  turnToTarget(-5, 100);
+  turnToTargetQuickly(-5, 100);
   driveRampUp('f', 10);
-  driveRampUp('f', 30);
+  driveRampUp('f', 40);
 }
 void crossCourtRed() //Denoted with 20 (Slot 5)
 {
@@ -462,7 +462,7 @@ void autonomous()
 
   //pros::Task flywheelRPMMonitor(maintainFlywheelSpeed, parameter3, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Flywheel speed task");
   //pros::Task intakeMonitor(monitorIntake, parameter2, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Intake auto movement task");
-  autoMode = 2;
+  autoMode = 3;
   if (autoMode == 1)
   {
     auto1();
